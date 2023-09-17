@@ -2,10 +2,13 @@ module Regex where
 
 import Prelude
 
+import Data.Symbol (class IsSymbol, reflectSymbol)
 import Prim.Boolean (False, True)
+import Prim.Int as Int
 import Prim.Symbol as Sym
 import Type.Data.Boolean (class And)
 import Type.Proxy (Proxy(..))
+import TypelevelRegex.AsciiTable (class AsciiCode)
 
 foreign import data Regex :: Type
 
@@ -167,8 +170,29 @@ instance
 
 else instance
   ( Sym.Cons head' tail' tail
+  , Sym.Append head' symIn symIn'
+  , Sym.Cons head'' tail'' tail'
+  , ParseCharacterClass head'' tail'' symIn' rest sym
+  ) =>
+  ParseCharacterClass "\\" tail symIn rest sym
+
+else instance
+  ( Sym.Cons symInHead symInTail symIn
+  , AsciiCode start symInHead
+  , Sym.Cons head' tail' tail
+  , AsciiCode end head'
+  , GetCharRange start end "" chars
+  , Sym.Append chars symInTail symIn'
+  , Sym.Cons head'' tail'' tail'
+  , ParseCharacterClass head'' tail'' symIn' rest sym
+
+  ) =>
+  ParseCharacterClass "-" tail symIn rest sym
+
+else instance
+  ( Sym.Cons head' tail' tail
   , ParseCharacterClass head' tail' symIn' rest sym
-  , Sym.Append symIn head symIn'
+  , Sym.Append head symIn symIn'
   ) =>
   ParseCharacterClass head tail symIn rest sym
 
@@ -193,7 +217,6 @@ else instance
 class
   Scan (regex :: Regex) (head :: Symbol) (tail :: Symbol) (result :: Boolean)
   | regex head tail -> result
-
 
 instance
   ( Match r head tail success rest
@@ -234,8 +257,8 @@ instance
   ) =>
   Match' regex sym
 
-match :: forall @regex @sym. Match' regex sym => String
-match = ""
+match :: forall @regex @sym. Match' regex sym => IsSymbol sym => String
+match = reflectSymbol (Proxy :: _ sym)
 
 ------------------------------------------------------------------------
 
@@ -336,8 +359,28 @@ else instance MatchLit head tail lit False tail
 
 ------------------------------------------------------------------------
 
+class
+  GetCharRange (start :: Int) (end :: Int) (charsIn :: Symbol) (chars :: Symbol)
+  | start end charsIn -> chars
+
+instance
+  ( AsciiCode start char
+  , Sym.Append char charsIn chars
+  ) =>
+  GetCharRange start start charsIn chars
+
+else instance
+  ( AsciiCode start char
+  , GetCharRange start' end charsIn' chars
+  , Sym.Append char charsIn charsIn'
+  , Int.Add start 1 start'
+  ) =>
+  GetCharRange start end charsIn chars
+
+------------------------------------------------------------------------
+
 -- y :: Proxy ?a
--- y = compileRegex @"^[sbc]$"
+-- y = compileRegex @"[jjsa-zxy]"
 
 x :: String
-x = match @"^https?://[abcdefgh][xy]$" @"http://ay"
+x = match @"^https?://[a-z]\\.[a-z]/[a]$" @"http://j.y/a"
