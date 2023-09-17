@@ -16,7 +16,7 @@ foreign import data Regex :: Type
 
 foreign import data Any :: Regex
 
-foreign import data CharacterClass :: Symbol -> Regex
+foreign import data CharClass :: Symbol -> Regex
 
 -- foreign import data NotChars :: Symbol -> Regex
 
@@ -38,7 +38,7 @@ infixr 6 type Cat as ~
 
 foreign import data Optional :: Regex -> Regex
 
--- foreign import data Many :: Regex -> Regex
+foreign import data Many :: Regex -> Regex
 
 -- foreign import data NTimes :: Int -> Int -> Regex -> Regex
 
@@ -135,16 +135,22 @@ else instance
   CompileRegex "\\" tail rin regex
 
 else instance
-  ( CompileRegex head' tail' ((Optional (Lit lit)) ~ rin) regex
+  ( CompileRegex head' tail' (Optional r ~ rin) regex
   , Sym.Cons head' tail' tail
   ) =>
-  CompileRegex "?" tail (Lit lit ~ rin) regex
+  CompileRegex "?" tail (r ~ rin) regex
+
+else instance
+  ( CompileRegex head' tail' (Many r ~ rin) regex
+  , Sym.Cons head' tail' tail
+  ) =>
+  CompileRegex "*" tail (r ~ rin) regex
 
 else instance
   ( Sym.Cons head' tail' tail
-  , ParseCharacterClass head' tail' "" rest sym
+  , ParseCharClass head' tail' "" rest sym
   , Sym.Cons head'' tail'' rest
-  , CompileRegex head'' tail'' ((CharacterClass sym) ~ rin) regex
+  , CompileRegex head'' tail'' ((CharClass sym) ~ rin) regex
   ) =>
   CompileRegex "[" tail rin regex
 
@@ -157,7 +163,7 @@ else instance
 ------------------------------------------------------------------------
 
 class
-  ParseCharacterClass
+  ParseCharClass
     (head :: Symbol)
     (tail :: Symbol)
     (symIn :: Symbol)
@@ -166,15 +172,15 @@ class
   | head tail symIn -> rest sym
 
 instance
-  ParseCharacterClass "]" tail symIn tail symIn
+  ParseCharClass "]" tail symIn tail symIn
 
 else instance
   ( Sym.Cons head' tail' tail
   , Sym.Append head' symIn symIn'
   , Sym.Cons head'' tail'' tail'
-  , ParseCharacterClass head'' tail'' symIn' rest sym
+  , ParseCharClass head'' tail'' symIn' rest sym
   ) =>
-  ParseCharacterClass "\\" tail symIn rest sym
+  ParseCharClass "\\" tail symIn rest sym
 
 else instance
   ( Sym.Cons symInHead symInTail symIn
@@ -184,17 +190,17 @@ else instance
   , GetCharRange start end "" chars
   , Sym.Append chars symInTail symIn'
   , Sym.Cons head'' tail'' tail'
-  , ParseCharacterClass head'' tail'' symIn' rest sym
+  , ParseCharClass head'' tail'' symIn' rest sym
 
   ) =>
-  ParseCharacterClass "-" tail symIn rest sym
+  ParseCharClass "-" tail symIn rest sym
 
 else instance
   ( Sym.Cons head' tail' tail
-  , ParseCharacterClass head' tail' symIn' rest sym
+  , ParseCharClass head' tail' symIn' rest sym
   , Sym.Append head symIn symIn'
   ) =>
-  ParseCharacterClass head tail symIn rest sym
+  ParseCharClass head tail symIn rest sym
 
 ------------------------------------------------------------------------
 
@@ -211,6 +217,20 @@ else instance
   , Contains head' tail' sym result
   ) =>
   Contains head tail sym result
+
+------------------------------------------------------------------------
+
+class Match' (regex :: Symbol) (sym :: Symbol)
+
+instance
+  ( CompileRegex' regex regex'
+  , Init sym head tail
+  , Scan regex' head tail True
+  ) =>
+  Match' regex sym
+
+match :: forall @regex @sym. Match' regex sym => IsSymbol sym => String
+match = reflectSymbol (Proxy :: _ sym)
 
 ------------------------------------------------------------------------
 
@@ -245,20 +265,6 @@ instance
   , Scan regex head' tail' success
   ) =>
   ScanResult False regex head tail success
-
-------------------------------------------------------------------------
-
-class Match' (regex :: Symbol) (sym :: Symbol)
-
-instance
-  ( CompileRegex' regex regex'
-  , Init sym head tail
-  , Scan regex' head tail True
-  ) =>
-  Match' regex sym
-
-match :: forall @regex @sym. Match' regex sym => IsSymbol sym => String
-match = reflectSymbol (Proxy :: _ sym)
 
 ------------------------------------------------------------------------
 
@@ -308,7 +314,29 @@ instance
   ) =>
   Match (Optional r) head tail success rest
 
----
+instance
+  ( Match r head tail success' rest'
+  , MatchManyRes success' r head tail rest' success rest
+  ) =>
+  Match (Many r) head tail success rest
+
+instance Match Any head tail True tail
+
+instance
+  ( Init chars charsHead charsTail
+  , Contains charsHead charsTail head success
+  ) =>
+  Match (CharClass chars) head tail success tail
+
+instance
+  ( Match r1 head tail success1 rest
+  , Sym.Cons head' tail' rest
+  , Match r2 head' tail' success2 rest'
+  , And success1 success2 success
+  ) =>
+  Match (Cat r1 r2) head tail success rest'
+
+------------------------------------------------------------------------
 
 class
   MatchOptRes
@@ -321,31 +349,40 @@ class
     (rest :: Symbol)
   | matchSuccess regex head tail rest2 -> success rest
 
+
 instance
   MatchOptRes True regex head_ tail_ rest True rest
+
+
 
 instance
   ( Sym.Cons head tail rest
   ) =>
   MatchOptRes False regex head tail rest2_ True rest
 
----
+------------------------------------------------------------------------
 
-instance Match Any head tail True tail
+class
+  MatchManyRes
+    (matchSuccess :: Boolean)
+    (regex :: Regex)
+    (head :: Symbol)
+    (tail :: Symbol)
+    (rest2 :: Symbol)
+    (success :: Boolean)
+    (rest :: Symbol)
+  | matchSuccess regex head tail rest2 -> success rest
 
 instance
-  ( Init chars charsHead charsTail
-  , Contains charsHead charsTail head success
+  ( Sym.Cons head' tail' rest
+  , Match (Many regex) head' tail' success' rest'
   ) =>
-  Match (CharacterClass chars) head tail success tail
+  MatchManyRes True regex head_ tail_ rest success' rest'
 
 instance
-  ( Match r1 head tail success1 rest
-  , Sym.Cons head' tail' rest
-  , Match r2 head' tail' success2 rest'
-  , And success1 success2 success
+  ( Sym.Cons head tail rest
   ) =>
-  Match (Cat r1 r2) head tail success rest'
+  MatchManyRes False regex head tail rest2_ True rest
 
 ------------------------------------------------------------------------
 
@@ -380,7 +417,7 @@ else instance
 ------------------------------------------------------------------------
 
 -- y :: Proxy ?a
--- y = compileRegex @"[jjsa-zxy]"
+-- y = compileRegex @"[as]*"
 
 x :: String
-x = match @"^https?://[a-z]\\.[a-z]/[a]$" @"http://j.y/a"
+x = match @"^https?://[a-z]*\\.[a-z]*/[a]$" @"http://hello.com/a"
