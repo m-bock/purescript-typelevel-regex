@@ -21,6 +21,8 @@ foreign import data Lit :: Symbol -> Regex
 
 foreign import data Nil :: Regex
 
+foreign import data End :: Regex
+
 --
 
 foreign import data Cat :: Regex -> Regex -> Regex
@@ -94,7 +96,7 @@ else instance
 
 ------------------------------------------------------------------------
 
-type EOF = "$"
+type EOF = "_"
 
 class
   CompileRegex (head :: Symbol) (tail :: Symbol) (regexIn :: Regex) (regex :: Regex)
@@ -110,6 +112,9 @@ else instance
   , Sym.Cons head' tail' tail
   ) =>
   CompileRegex "." tail rin regex
+
+else instance
+  CompileRegex "$" EOF rin (End ~ rin)
 
 else instance
   ( CompileRegex head'' tail'' (Lit head' ~ rin) regex
@@ -182,7 +187,7 @@ class Match' (regex :: Symbol) (sym :: Symbol)
 instance
   ( CompileRegex' regex regex'
   , Init sym head tail
-  , Match regex' head tail True EOF
+  , Match regex' head tail True rest
   ) =>
   Match' regex sym
 
@@ -217,6 +222,20 @@ instance
   ( MatchLit head tail lit success rest
   ) =>
   Match (Lit lit) head tail success rest
+
+instance
+  ( Sym.Cons EOF tail rest
+  ) =>
+  Match End EOF tail True rest
+
+else instance
+  Match End head tail False tail
+
+
+instance
+  ( Sym.Cons head tail rest
+  ) =>
+  Match Nil head tail True rest
 
 instance
   ( Match r head tail success' rest'
@@ -255,11 +274,6 @@ instance
   ) =>
   Match (CharacterClass chars) head tail success tail
 
-instance
-  Match Nil EOF "" True EOF
-
-else instance
-  Match Nil head tail False tail
 
 instance
   ( Match r1 head tail success1 rest
@@ -282,7 +296,7 @@ else instance MatchLit head tail lit False tail
 ------------------------------------------------------------------------
 
 -- y :: Proxy ?a
--- y = compileRegex @"[sbc]"
+-- y = compileRegex @"[sbc]$"
 
 x :: String
-x = match @"https?://[abcdefgh][xy]" @"http://ay"
+x = match @"https?://[abcdefgh][xy]$" @"http://ay"
