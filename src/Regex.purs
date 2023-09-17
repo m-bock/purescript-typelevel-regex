@@ -13,7 +13,7 @@ foreign import data Regex :: Type
 
 foreign import data Any :: Regex
 
--- foreign import data Chars :: Symbol -> Regex
+foreign import data CharacterClass :: Symbol -> Regex
 
 -- foreign import data NotChars :: Symbol -> Regex
 
@@ -126,9 +126,54 @@ else instance
 
 else instance
   ( Sym.Cons head' tail' tail
+  , ParseCharacterClass head' tail' "" rest sym
+  , Sym.Cons head'' tail'' rest
+  , CompileRegex head'' tail'' ((CharacterClass sym) ~ rin) regex
+  ) =>
+  CompileRegex "[" tail rin regex
+
+else instance
+  ( Sym.Cons head' tail' tail
   , CompileRegex head' tail' (Lit head ~ rin) regex
   ) =>
   CompileRegex head tail rin regex
+
+------------------------------------------------------------------------
+
+class
+  ParseCharacterClass
+    (head :: Symbol)
+    (tail :: Symbol)
+    (symIn :: Symbol)
+    (rest :: Symbol)
+    (sym :: Symbol)
+  | head tail symIn -> rest sym
+
+instance
+  ParseCharacterClass "]" tail symIn tail symIn
+
+else instance
+  ( Sym.Cons head' tail' tail
+  , ParseCharacterClass head' tail' symIn' rest sym
+  , Sym.Append symIn head symIn'
+  ) =>
+  ParseCharacterClass head tail symIn rest sym
+
+------------------------------------------------------------------------
+
+class
+  Contains (head :: Symbol) (tail :: Symbol) (sym :: Symbol) (result :: Boolean)
+  | head tail sym -> result
+
+instance Contains EOF "" sym False
+
+else instance Contains sym tail sym True
+
+else instance
+  ( Sym.Cons head' tail' tail
+  , Contains head' tail' sym result
+  ) =>
+  Contains head tail sym result
 
 ------------------------------------------------------------------------
 
@@ -205,6 +250,12 @@ instance
 instance Match Any head tail True tail
 
 instance
+  ( Init chars charsHead charsTail
+  , Contains charsHead charsTail head success
+  ) =>
+  Match (CharacterClass chars) head tail success tail
+
+instance
   Match Nil EOF "" True EOF
 
 else instance
@@ -231,7 +282,7 @@ else instance MatchLit head tail lit False tail
 ------------------------------------------------------------------------
 
 -- y :: Proxy ?a
--- y = compileRegex @"aab"
+-- y = compileRegex @"[sbc]"
 
 x :: String
-x = match @"ab?aa" @"abaa"
+x = match @"https?://[abcdefgh][xy]" @"http://ay"
