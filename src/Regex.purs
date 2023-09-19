@@ -6,7 +6,6 @@ import Data.Symbol (class IsSymbol, reflectSymbol)
 import Prim.Boolean (False, True)
 import Prim.Int as Int
 import Prim.Symbol as Sym
-import Type.Data.Boolean (class And)
 import Type.Proxy (Proxy(..))
 import TypelevelRegex.AsciiTable (class AsciiCode)
 
@@ -27,6 +26,8 @@ foreign import data Nil :: Regex
 foreign import data End :: Regex
 
 foreign import data Start :: Regex
+
+foreign import data Group :: Regex -> Regex
 
 --
 
@@ -93,7 +94,7 @@ instance CompileRegex' "" Nil
 
 else instance
   ( Sym.Cons head tail sym'
-  , CompileRegex head tail Nil regex'
+  , CompileRegex head tail Nil 0 EOF regex'
   , Reverse regex' Nil regex
   , Sym.Append sym EOF sym'
   ) =>
@@ -101,64 +102,90 @@ else instance
 
 ------------------------------------------------------------------------
 
-type EOF = "_"
+type EOF = "☒"
 
 class
-  CompileRegex (head :: Symbol) (tail :: Symbol) (regexIn :: Regex) (regex :: Regex)
-  | head tail regexIn -> regex
+  CompileRegex
+    (head :: Symbol)
+    (tail :: Symbol)
+    (regexIn :: Regex)
+    (depth :: Int)
+    (rest :: Symbol)
+    (regex :: Regex)
+  | head tail regexIn depth -> rest regex
 
 compileRegex :: forall @sym regex. CompileRegex' sym regex => Proxy regex
 compileRegex = Proxy
 
-instance CompileRegex EOF "" r r
+instance CompileRegex EOF "" r 0 EOF r
+
+else instance CompileRegex ")" tail r depth tail r
 
 else instance
-  ( CompileRegex head' tail' (Any ~ rin) regex
+  ( Sym.Cons head' tail' tail
+  , Int.Add depth 1 depth'
+  , CompileRegex head' tail' Nil depth' rest regex'
+  , Reverse regex' Nil regex''
+  , Sym.Cons head'' tail'' rest
+  , CompileRegex head'' tail'' (Group regex'' ~ rin) depth rest2 regex
+  ) =>
+  CompileRegex "(" tail rin depth rest2 regex
+
+else instance
+  ( CompileRegex head' tail' (Any ~ rin) depth rest regex
   , Sym.Cons head' tail' tail
   ) =>
-  CompileRegex "." tail rin regex
+  CompileRegex "." tail rin depth rest regex
 
 else instance
-  ( CompileRegex head' tail' (Start ~ rin) regex
+  ( CompileRegex head' tail' (Start ~ rin) depth rest regex
   , Sym.Cons head' tail' tail
   ) =>
-  CompileRegex "^" tail rin regex
+  CompileRegex "^" tail rin depth rest regex
 
 else instance
-  CompileRegex "$" EOF rin (End ~ rin)
+  CompileRegex "$" EOF rin depth EOF (End ~ rin)
 
 else instance
-  ( CompileRegex head'' tail'' (Lit head' ~ rin) regex
+  ( CompileRegex head'' tail'' (Lit head' ~ rin) depth rest regex
   , Sym.Cons head' tail' tail
   , Sym.Cons head'' tail'' tail'
   ) =>
-  CompileRegex "\\" tail rin regex
+  CompileRegex "\\" tail rin depth rest regex
 
 else instance
-  ( CompileRegex head' tail' (Optional r ~ rin) regex
+  ( CompileRegex head' tail' (Optional r ~ rin) depth rest regex
   , Sym.Cons head' tail' tail
   ) =>
-  CompileRegex "?" tail (r ~ rin) regex
+  CompileRegex "?" tail (r ~ rin) depth rest regex
 
 else instance
-  ( CompileRegex head' tail' (Many r ~ rin) regex
+  ( CompileRegex head' tail' (Many r ~ r ~ rin) depth rest regex
   , Sym.Cons head' tail' tail
   ) =>
-  CompileRegex "*" tail (r ~ rin) regex
+  CompileRegex "+" tail (r ~ rin) depth rest regex
+
 
 else instance
+  ( CompileRegex head' tail' (Many r ~ rin) depth rest regex
+  , Sym.Cons head' tail' tail
+  ) =>
+  CompileRegex "*" tail (r ~ rin) depth rest regex
+
+else instance
+
   ( Sym.Cons head' tail' tail
   , ParseCharClass head' tail' "" rest sym
   , Sym.Cons head'' tail'' rest
-  , CompileRegex head'' tail'' ((CharClass sym) ~ rin) regex
+  , CompileRegex head'' tail'' (CharClass sym ~ rin) depth rest' regex
   ) =>
-  CompileRegex "[" tail rin regex
+  CompileRegex "[" tail rin depth rest' regex
 
 else instance
   ( Sym.Cons head' tail' tail
-  , CompileRegex head' tail' (Lit head ~ rin) regex
+  , CompileRegex head' tail' (Lit head ~ rin) depth rest regex
   ) =>
-  CompileRegex head tail rin regex
+  CompileRegex head tail rin depth rest regex
 
 ------------------------------------------------------------------------
 
@@ -234,6 +261,20 @@ match = reflectSymbol (Proxy :: _ sym)
 
 ------------------------------------------------------------------------
 
+class NotMatch' (regex :: Symbol) (sym :: Symbol)
+
+instance
+  ( CompileRegex' regex regex'
+  , Init sym head tail
+  , Scan regex' head tail False
+  ) =>
+  NotMatch' regex sym
+
+notMatch :: forall @regex @sym. NotMatch' regex sym => IsSymbol sym => String
+notMatch = reflectSymbol (Proxy :: _ sym)
+
+------------------------------------------------------------------------
+
 class
   Scan (regex :: Regex) (head :: Symbol) (tail :: Symbol) (result :: Boolean)
   | regex head tail -> result
@@ -295,46 +336,64 @@ instance
   ) =>
   Match (Lit lit) head tail success rest
 
-instance
+else instance
   ( Sym.Cons EOF tail rest
   ) =>
   Match End EOF tail True rest
 
+-- else instance
+--   Match r EOF tail False tail
+
 else instance
   Match End head tail False tail
 
-instance
+else instance
   ( Sym.Cons head tail rest
   ) =>
   Match Nil head tail True rest
 
-instance
+else instance
   ( Match r head tail success' rest'
   , MatchOptRes success' r head tail rest' success rest
   ) =>
   Match (Optional r) head tail success rest
 
-instance
+else instance
   ( Match r head tail success' rest'
   , MatchManyRes success' r head tail rest' success rest
   ) =>
   Match (Many r) head tail success rest
 
-instance Match Any head tail True tail
+else instance
+  ( Match r head tail success rest
+  ) =>
+  Match (Group r) head tail success rest
 
-instance
+else instance Match Any head tail True tail
+
+else instance
   ( Init chars charsHead charsTail
   , Contains charsHead charsTail head success
   ) =>
   Match (CharClass chars) head tail success tail
 
-instance
+else instance
   ( Match r1 head tail success1 rest
-  , Sym.Cons head' tail' rest
-  , Match r2 head' tail' success2 rest'
-  , And success1 success2 success
+  , MatchCatResult success1 r2 rest success rest'
   ) =>
   Match (Cat r1 r2) head tail success rest'
+
+class
+  MatchCatResult (res :: Boolean) (regex :: Regex) (restIn :: Symbol) (success :: Boolean) (rest :: Symbol)
+  | res regex restIn -> success rest
+
+instance
+  ( Sym.Cons head tail r
+  , Match regex head tail success rest
+  ) =>
+  MatchCatResult True regex r success rest
+
+instance MatchCatResult False regex r False r
 
 ------------------------------------------------------------------------
 
@@ -349,11 +408,8 @@ class
     (rest :: Symbol)
   | matchSuccess regex head tail rest2 -> success rest
 
-
 instance
   MatchOptRes True regex head_ tail_ rest True rest
-
-
 
 instance
   ( Sym.Cons head tail rest
@@ -417,7 +473,19 @@ else instance
 ------------------------------------------------------------------------
 
 -- y :: Proxy ?a
--- y = compileRegex @"[as]*"
+-- y = compileRegex @"(ab)*"
+
+x3 :: String
+x3 = match
+  @"^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
+  @"http://www.hello.com/a/bb_bb"
 
 x :: String
-x = match @"^https?://[a-z]*\\.[a-z]*/[a]$" @"http://hello.com/a"
+x = match
+  @"^(/abc)*$"
+  @"/abc/abc/abc/abc/abc"
+
+x2 :: String
+x2 = notMatch
+  @"^(ab)$"
+  @"b"
