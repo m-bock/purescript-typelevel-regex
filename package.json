@@ -1,0 +1,12 @@
+{
+  "name": "purescript-tag-syntax",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:thought2/purescript-typelevel-regex.git",
+  "author": "Michael Bock <no-day@posteo.net>",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "dedent": "^1.5.1"
+  }
+}
