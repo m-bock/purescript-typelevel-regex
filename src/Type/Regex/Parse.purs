@@ -18,6 +18,8 @@ type ErrorMissingOpen = "Parenthesis mismatch: Missing '('"
 type ErrorIllegalQuantification = "Nothing to repeat"
 type ErrorInvalidRange = "Invalid character range"
 
+type UnexpectedEndOfCharClass = "Unexpected end of character class"
+
 --------------------------------------------------------------------------------
 --- ParseRegex
 --------------------------------------------------------------------------------
@@ -170,10 +172,15 @@ class
     (chars :: CharClass)
 
 instance
-  ( Sym.Cons head tail sym
-  , ParseCharacterClassMatch head tail charsIn rest chars
+  ( Fail (Text UnexpectedEndOfCharClass)
   ) =>
-  ParseCharacterClassGo sym charsIn rest chars
+  ParseCharacterClassGo "" charsClassFrom rest charsClassTo
+
+else instance
+  ( Sym.Cons head tail sym
+  , ParseCharacterClassMatch head tail charsClassFrom rest charsClassTo
+  ) =>
+  ParseCharacterClassGo sym charsClassFrom rest charsClassTo
 
 --- Match
 
