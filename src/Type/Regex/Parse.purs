@@ -1,12 +1,22 @@
 module Type.Regex.Parse where
 
 import Prim.Int as Int
+import Prim.Ordering (LT, Ordering)
 import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Text)
-import Type.Equality (class TypeEquals)
 import Type.Proxy (Proxy(..))
 import Type.Regex.Types (type (~), Group, Nil, Regex)
 import Type.Regex.Types as R
+import TypelevelRegex.AsciiTable (class AsciiCode)
+
+--------------------------------------------------------------------------------
+--- Errors
+--------------------------------------------------------------------------------
+
+type ErrorMissingClose = "Parenthesis mismatch: Missing ')'"
+type ErrorMissingOpen = "Parenthesis mismatch: Missing '('"
+type ErrorIllegalQuantification = "Nothing to repeat"
+type ErrorInvalidRange = "Invalid character range"
 
 --------------------------------------------------------------------------------
 --- ParseRegex
@@ -24,9 +34,7 @@ instance
 parseRegex :: forall @spec regex. ParseRegex spec regex => Proxy regex
 parseRegex = Proxy
 
---------------------------------------------------------------------------------
---- ParseRegex
---------------------------------------------------------------------------------
+--- Depth
 
 class
   ParseRegexDepth (spec :: Symbol) (depth :: Int) (rest :: Symbol) (regex :: Regex)
@@ -38,34 +46,30 @@ instance
   ) =>
   ParseRegexDepth spec depth rest regex'
 
---------------------------------------------------------------------------------
---- ParseRegexGo
---------------------------------------------------------------------------------
+--- Go
 
 class
   ParseRegexGo
-    (spec :: Symbol)
+    (sym :: Symbol)
     (regexFrom :: Regex)
     (depth :: Int)
     (rest :: Symbol)
     (regexTo :: Regex)
-  | spec regexFrom depth -> rest regexTo
+  | sym regexFrom depth -> rest regexTo
 
 instance parseRegexGoEnd :: ParseRegexGo "" regex 0 "" regex
 
 else instance parseRegexGoEndError ::
-  Fail (Text "Parenthesis mismatch: Missing ')'") =>
+  Fail (Text ErrorMissingClose) =>
   ParseRegexGo "" regex depth rest regex
 
 else instance parseRegexGoCons ::
-  ( Sym.Cons head tail spec
+  ( Sym.Cons head tail sym
   , ParseRegexMatch head tail regexFrom depth rest regexTo
   ) =>
-  ParseRegexGo spec regexFrom depth rest regexTo
+  ParseRegexGo sym regexFrom depth rest regexTo
 
---------------------------------------------------------------------------------
---- ParseRegexMatch
---------------------------------------------------------------------------------
+--- Match
 
 class
   ParseRegexMatch
@@ -78,7 +82,7 @@ class
   | head tail regexFrom depth -> rest regex
 
 instance parseRegexMatchGroupGroupCloseError ::
-  ( Fail (Text "Parenthesis mismatch: Missing '('")
+  ( Fail (Text ErrorMissingOpen)
   ) =>
   ParseRegexMatch ")" tail regexFrom 0 rest regexTo
 
@@ -137,6 +141,136 @@ else instance parseRegexMatchLit ::
   ParseRegexMatch head tail regexFrom depth rest regexTo
 
 --------------------------------------------------------------------------------
+--- ParseCharacterClass
+--------------------------------------------------------------------------------
+
+foreign import data CharClass :: Type
+
+foreign import data CharClassNil :: CharClass
+
+foreign import data CharClassLit :: Symbol -> CharClass -> CharClass
+
+foreign import data CharClassRange :: Symbol -> Symbol -> CharClass -> CharClass
+
+class ParseCharacterClass (sym :: Symbol) (rest :: Symbol) (chars :: Symbol)
+
+instance
+  ( ParseCharacterClassGo sym CharClassNil rest charClass
+  , ResolveCharacterClass charClass chars
+  ) =>
+  ParseCharacterClass sym rest chars
+
+--- Go
+
+class
+  ParseCharacterClassGo
+    (sym :: Symbol)
+    (charsIn :: CharClass)
+    (rest :: Symbol)
+    (chars :: CharClass)
+
+instance
+  ( Sym.Cons head tail sym
+  , ParseCharacterClassMatch head tail charsIn rest chars
+  ) =>
+  ParseCharacterClassGo sym charsIn rest chars
+
+--- Match
+
+class
+  ParseCharacterClassMatch
+    (head :: Symbol)
+    (tail :: Symbol)
+    (charsIn :: CharClass)
+    (rest :: Symbol)
+    (chars :: CharClass)
+
+instance parseCharacterClassMatchClose ::
+  ParseCharacterClassMatch "]" tail charsIn tail charsIn
+
+-- instance parseCharacterClassMatchQuote ::
+--   (
+--     Sym.Cons prevChar
+--   ) =>
+--   ParseCharacterClassMatch "\\" tail charsIn rest chars
+
+--------------------------------------------------------------------------------
+--- ResolveCharacterClass
+--------------------------------------------------------------------------------
+
+class
+  ResolveCharacterClass (charClass :: CharClass) (chars :: Symbol)
+  | charClass -> chars
+
+instance resolveCharacterClassNil ::
+  ResolveCharacterClass CharClassNil ""
+
+instance resolveCharacterClassLit ::
+  ( Sym.Cons lit chars' chars
+  , ResolveCharacterClass charClass chars'
+  ) =>
+  ResolveCharacterClass (CharClassLit lit charClass) chars
+
+instance resolveCharacterClassRange ::
+  ( Sym.Append chars chars' chars''
+  , ResolveCharacterClass charClass chars'
+  , GetCharRange start end chars
+  ) =>
+  ResolveCharacterClass (CharClassRange start end charClass) chars''
+
+--------------------------------------------------------------------------------
+--- GetCharRange
+--------------------------------------------------------------------------------
+
+class
+  GetCharRange (start :: Symbol) (end :: Symbol) (chars :: Symbol)
+  | start end -> chars
+
+instance
+  ( GetCharRangeGuard ord start end chars
+  , AsciiCode start charStart
+  , AsciiCode end charEnd
+  , Int.Compare start end ord
+  ) =>
+  GetCharRange charStart charEnd chars
+
+--- Guard
+
+class
+  GetCharRangeGuard (ord :: Ordering) (start :: Int) (end :: Int) (chars :: Symbol)
+  | ord start end -> chars
+
+instance getCharRangeGuardSucceed ::
+  ( GetCharRangeGo start end "" chars
+  ) =>
+  GetCharRangeGuard LT start end chars
+
+else instance getCharRangeGuardFail ::
+  ( Fail (Text ErrorInvalidRange)
+  ) =>
+  GetCharRangeGuard ord start end chars
+
+--- Go
+
+class
+  GetCharRangeGo (start :: Int) (end :: Int) (charsFrom :: Symbol) (charsTo :: Symbol)
+  | start end charsFrom -> charsTo
+
+instance getCharRangeGoLast ::
+  ( AsciiCode end char
+  , Sym.Append char charsFrom charsTo
+  ) =>
+  GetCharRangeGo end end charsFrom charsTo
+
+else instance getCharRangeGoNext ::
+  ( AsciiCode start char
+  , GetCharRangeGo start' end charsFrom' charsTo
+  , Sym.Append char charsFrom charsFrom'
+  , Int.Add start 1 start'
+  ) =>
+  GetCharRangeGo start end charsFrom charsTo
+
+--------------------------------------------------------------------------------
 --- IsQuantifiable
 --------------------------------------------------------------------------------
 
@@ -146,7 +280,7 @@ instance IsQuantifiable (R.Lit s)
 else instance IsQuantifiable (R.CharClass s)
 else instance IsQuantifiable (R.NegativeCharClass s)
 else instance IsQuantifiable (R.Group r)
-else instance (Fail (Text "Nothing to repeat")) => IsQuantifiable r
+else instance (Fail (Text ErrorIllegalQuantification)) => IsQuantifiable r
 
 --------------------------------------------------------------------------------
 --- ReverseRegex
@@ -161,9 +295,7 @@ instance
   ) =>
   ReverseRegex regex regexOut
 
---------------------------------------------------------------------------------
---- ReverseRegexGo
---------------------------------------------------------------------------------
+--- Go
 
 class
   ReverseRegexGo (regex :: Regex) (regexFrom :: Regex) (regexTo :: Regex)
@@ -175,3 +307,4 @@ instance
   ( ReverseRegexGo tail (head ~ regexFrom) regexTo
   ) =>
   ReverseRegexGo (head ~ tail) regexFrom regexTo
+
