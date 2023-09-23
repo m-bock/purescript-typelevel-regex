@@ -1,4 +1,4 @@
-module TypelevelRegex.AsciiTable where
+module Type.Regex.AsciiTable where
 
 class AsciiCode (dec :: Int) (sym :: Symbol) | dec -> sym, sym -> dec
 

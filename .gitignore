@@ -9,3 +9,4 @@ generated-docs/
 .purs*
 .psa*
 .spago
+/tmp

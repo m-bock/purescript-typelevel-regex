@@ -7,7 +7,7 @@ import Prim.Boolean (False, True)
 import Prim.Int as Int
 import Prim.Symbol as Sym
 import Type.Proxy (Proxy(..))
-import TypelevelRegex.AsciiTable (class AsciiCode)
+import Type.Regex.AsciiTable (class AsciiCode)
 
 foreign import data Regex :: Type
 
