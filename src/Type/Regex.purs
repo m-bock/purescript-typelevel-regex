@@ -1,7 +1,6 @@
 module Type.Regex where
 
 import Data.Symbol (class IsSymbol, reflectSymbol)
-import Prim.Boolean (True)
 import Type.Proxy (Proxy(..))
 import Type.Regex.Compile (class CompileRegex)
 import Type.Regex.Match (class ScanRegex)
@@ -13,7 +12,7 @@ class
 instance
   ( ParseRegex regexStr regexAst
   , CompileRegex regexAst regex
-  , ScanRegex regex str True
+  , ScanRegex regex str
   ) =>
   TestRegex regexStr str
 
