@@ -1,0 +1,7 @@
+package:
+  dependencies:
+    - typelevel-regex
+  name: fmt-demo
+  test:
+    dependencies: []
+    main: Test.Main
