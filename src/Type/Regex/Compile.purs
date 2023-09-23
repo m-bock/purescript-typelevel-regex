@@ -1,8 +1,13 @@
 module Type.Regex.Compile where
 
 import Prim.Boolean (True)
+import Prim.TypeError (class Fail, Beside, Doc, Text)
 import Type.Regex.Ast as Ast
 import Type.Regex.RegexRep as R
+
+type MkError (err :: Doc) = Beside (Text "Regex Compile Error: ") err
+
+type ErrorUnexpected = MkError (Text "Unexpected error. Please report this as a bug.")
 
 --------------------------------------------------------------------------------
 --- CompileRegex
@@ -23,7 +28,7 @@ instance compileRegexNil ::
 --   ) =>
 --   CompileRegex (Ast.RegexCharClass charClass positive) regex
 
-instance compileRegexLit ::
+else instance compileRegexLit ::
   CompileRegex (Ast.Lit char) (R.Lit char True)
 
 -- instance compileRegexEndOfStr ::
@@ -47,16 +52,21 @@ instance compileRegexLit ::
 --   ) =>
 --   CompileRegex (Ast.Many ast) (R.Many regex)
 
--- instance compileRegexGroup ::
---   ( CompileRegex ast regex
---   ) =>
---   CompileRegex (Ast.Group ast) (R.Group regex)
+else instance compileRegexGroup ::
+  ( CompileRegex ast regex
+  ) =>
+  CompileRegex (Ast.Group ast) regex
 
-instance compileRegexCat ::
+else instance compileRegexCat ::
   ( CompileRegex ast1 regex1
   , CompileRegex ast2 regex2
   ) =>
   CompileRegex (Ast.Cat ast1 ast2) (R.Cat regex1 regex2)
+
+else instance compileRegexAlt ::
+  ( Fail ErrorUnexpected
+  ) =>
+  CompileRegex ast regex
 
 -- instance compileRegexAlt ::
 --   ( CompileRegex ast1 regex1

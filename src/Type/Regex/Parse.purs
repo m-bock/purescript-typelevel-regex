@@ -4,22 +4,27 @@ import Prelude
 
 import Prim.Int as Int
 import Prim.Symbol as Sym
-import Prim.TypeError (class Fail, Doc, Text)
+import Prim.TypeError (class Fail, Beside, Doc, Text)
 import Type.Char (class SymIsChar)
 import Type.Proxy (Proxy(..))
 import Type.Regex.Ast (type (~))
 import Type.Regex.Ast as Ast
 
-
 --------------------------------------------------------------------------------
 --- Errors
 --------------------------------------------------------------------------------
 
-type ErrorMissingClose = Text "Parenthesis mismatch: Missing ')'"
-type ErrorMissingOpen = Text "Parenthesis mismatch: Missing '('"
-type ErrorIllegalQuantification = Text "Nothing to repeat"
-type ErrorInvalidRange = Text "Invalid character range"
-type UnexpectedEndOfCharClass = Text "Unexpected end of character class"
+type MkError (err :: Doc) = Beside (Text "Regex Parse Error: ") err
+
+type ErrorMissingClose = MkError (Text "Parenthesis mismatch: Missing ')'")
+
+type ErrorMissingOpen = MkError (Text "Parenthesis mismatch: Missing '('")
+
+type ErrorIllegalQuantification = MkError (Text "Nothing to repeat")
+
+type ErrorInvalidRange = MkError (Text "Invalid character range")
+
+type UnexpectedEndOfCharClass = MkError (Text "Unexpected end of character class")
 
 --------------------------------------------------------------------------------
 --- ParseRegex
@@ -63,6 +68,8 @@ class
 instance parseRegexGoEnd :: ParseRegexGo "" regex 0 "" regex
 
 else instance parseRegexGoEndError ::
+  ( Fail ErrorMissingClose
+  ) =>
   ParseRegexGo "" regex depth "" regex
 
 else instance parseRegexGoCons ::
@@ -83,20 +90,20 @@ class
     (regex :: Ast.Regex)
   | head tail regexFrom depth -> rest regex
 
--- instance parseRegexMatchGroupGroupCloseError ::
---   ( Fail ErrorMissingOpen
---   ) =>
---   ParseRegexMatch ")" tail regexFrom 0 rest regexTo
+instance parseRegexMatchGroupGroupCloseError ::
+  ( Fail ErrorMissingOpen
+  ) =>
+  ParseRegexMatch ")" tail regexFrom 0 rest regexTo
 
--- else instance parseRegexMatchGroupClose ::
---   ParseRegexMatch ")" tail regex depth tail regex
+else instance parseRegexMatchGroupClose ::
+  ParseRegexMatch ")" tail regex depth tail regex
 
--- else instance parseRegexMatchGroupStart ::
---   ( Increment depth depthNext
---   , ParseRegexAtDepth tail depthNext rest' regexTo'
---   , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depth rest regexTo
---   ) =>
---   ParseRegexMatch "(" tail regexFrom depth rest regexTo
+else instance parseRegexMatchGroupStart ::
+  ( Increment depth depthNext
+  , ParseRegexAtDepth tail depthNext rest' regexTo'
+  , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depth rest regexTo
+  ) =>
+  ParseRegexMatch "(" tail regexFrom depth rest regexTo
 
 -- else instance parseRegexMatchWildcard ::
 --   ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
@@ -144,7 +151,7 @@ class
 --   ) =>
 --   ParseRegexMatch "\\" tail regexFrom depth rest regexTo
 
-instance parseRegexMatchLit ::
+else instance parseRegexMatchLit ::
   ( ParseRegexGo tail (Ast.Lit char ~ regexFrom) depth rest regexTo
   , SymIsChar head char
   ) =>

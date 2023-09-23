@@ -2,7 +2,7 @@ module Type.Regex.Match where
 
 import Prim.Boolean (False, True)
 import Prim.Symbol as Sym
-import Prim.TypeError (class Fail, Text)
+import Prim.TypeError (class Fail, Beside, Text)
 import Type.Char (UnsafeMkChar)
 import Type.Regex.RegexRep (type (~), Regex)
 import Type.Regex.RegexRep as R
@@ -10,20 +10,21 @@ import Type.Regex.RegexRep as R
 class ScanRegex (regex :: Regex) (str :: Symbol)
 
 instance
-  ( RegexAttemptGo regex str "" matches
-  , ScanRegexResult matches
+  ( RegexAttemptGo regex str rest matches
+  , ScanRegexResult rest matches
   ) =>
   ScanRegex regex str
 
 --- ScanRegexResult
 
-class ScanRegexResult (matches :: Boolean)
+class ScanRegexResult (rest :: Symbol) (matches :: Boolean)
 
-instance ScanRegexResult True
+instance ScanRegexResult "" True
+
 instance
-  ( Fail (Text "Regex failed to match")
+  ( Fail (Beside (Text "Regex failed to match. Rest:") (Text rest))
   ) =>
-  ScanRegexResult False
+  ScanRegexResult rest False
 
 --- RegexAttemptGo
 
@@ -31,7 +32,12 @@ class
   RegexAttemptGo (regex :: Regex) (str :: Symbol) (rest :: Symbol) (matches :: Boolean)
   | regex str -> rest matches
 
-instance RegexAttemptGo R.Nil "" "" True
+instance RegexAttemptGo R.Nil rest rest True
+
+else instance
+  ( RegexAttemptGo regex str rest matches
+  ) =>
+  RegexAttemptGo (R.Nil ~ regex) str rest matches
 
 else instance RegexAttemptGo regex "" "" False
 
@@ -49,6 +55,11 @@ class
 
 instance
   RegexAttemptMatch (R.Lit (UnsafeMkChar head) True) head tail tail True
+
+else instance
+  ( Sym.Cons head tail str
+  ) =>
+  RegexAttemptMatch R.Nil head tail str True
 
 else instance
   ( RegexAttemptMatch regex1 head tail rest matches

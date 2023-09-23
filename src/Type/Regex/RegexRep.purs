@@ -5,8 +5,6 @@ import Type.Char (Char')
 
 foreign import data Regex :: Type
 
-foreign import data Group :: Regex -> Regex
-
 ---
 
 foreign import data Nil :: Regex
