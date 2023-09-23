@@ -32,13 +32,13 @@ it reflects the type level input string if the regex matches.
 type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
 
 simple :: String
-simple = Regex.guard @"()()(s)" @"s"
+simple = Regex.guard @"hello|world|abc" @"abc"
 
 -- p :: Proxy ?a
--- p = parseRegex @"()"
+-- p = parseRegex @"(a|b)"
 
 -- c :: Proxy ?a
--- c = compileRegex @"()"
+-- c = compileRegex @"(a|(cd))"
 
 -- email :: String
 -- email = Regex.guard @"[a-z]@[a-z]\\.(com|org)" @"joe@doe.com"

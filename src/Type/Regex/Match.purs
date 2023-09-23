@@ -34,11 +34,6 @@ class
 
 instance RegexAttemptGo R.Nil rest rest True
 
-else instance
-  ( RegexAttemptGo regex str rest matches
-  ) =>
-  RegexAttemptGo (R.Nil ~ regex) str rest matches
-
 else instance RegexAttemptGo regex "" "" False
 
 else instance
@@ -62,10 +57,19 @@ else instance
   RegexAttemptMatch R.Nil head tail str True
 
 else instance
-  ( RegexAttemptMatch regex1 head tail rest matches
+  ( Sym.Cons head tail str
+  , RegexAttemptGo regex1 str rest matches
   , RegexAttemptMatchCatResult regex2 matches rest rest' matches'
   ) =>
   RegexAttemptMatch (R.Cat regex1 regex2) head tail rest' matches'
+
+else instance
+  ( Sym.Cons head tail str
+  , RegexAttemptGo regex1 str restLeft matches
+
+  , RegexAttemptMatchAltResult regex2 matches restLeft str rest' matches'
+  ) =>
+  RegexAttemptMatch (R.Alt regex1 regex2) head tail rest' matches'
 
 else instance
   RegexAttemptMatch regex head tail tail False
@@ -83,3 +87,17 @@ instance
 
 else instance
   RegexAttemptMatchCatResult regex False rest rest False
+
+--- RegexAttemptMatchAltResult
+
+class
+  RegexAttemptMatchAltResult (regex :: Regex) (matched :: Boolean) (restInLeft :: Symbol) (restInRight :: Symbol) (restOut :: Symbol) (matches :: Boolean)
+  | regex matched restInLeft restInRight -> restOut matches
+
+instance
+  RegexAttemptMatchAltResult regex True rest restInRight rest True
+
+else instance
+  ( RegexAttemptGo regex restIn restOut matches
+  ) =>
+  RegexAttemptMatchAltResult regex False restInLeft restIn restOut matches

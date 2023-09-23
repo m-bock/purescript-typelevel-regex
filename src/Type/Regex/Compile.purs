@@ -57,13 +57,34 @@ else instance compileRegexGroup ::
   ) =>
   CompileRegex (Ast.Group ast) regex
 
+
+
+
+else instance compileRegexCat' ::
+  ( CompileRegex ast regex
+  ) =>
+  CompileRegex (Ast.Cat ast Ast.Nil) regex
+
+else instance compileRegexCat'' ::
+  ( CompileRegex ast regex
+  ) =>
+  CompileRegex (Ast.Cat Ast.Nil ast) regex
+
 else instance compileRegexCat ::
   ( CompileRegex ast1 regex1
   , CompileRegex ast2 regex2
   ) =>
   CompileRegex (Ast.Cat ast1 ast2) (R.Cat regex1 regex2)
 
+
+
 else instance compileRegexAlt ::
+  ( CompileRegex ast1 regex1
+  , CompileRegex ast2 regex2
+  ) =>
+  CompileRegex (Ast.Alt ast1 ast2) (R.Alt regex1 regex2)
+
+else instance compileRegexErrUnexpected ::
   ( Fail ErrorUnexpected
   ) =>
   CompileRegex ast regex
