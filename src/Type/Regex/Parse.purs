@@ -64,8 +64,7 @@ class
 instance parseRegexGoEnd :: ParseRegexGo "" regex 0 "" regex
 
 else instance parseRegexGoEndError ::
-  Fail ErrorMissingClose =>
-  ParseRegexGo "" regex depth rest regex
+  ParseRegexGo "" regex depth "" regex
 
 else instance parseRegexGoCons ::
   ( Sym.Cons head tail sym
@@ -85,68 +84,68 @@ class
     (regex :: Ast.Regex)
   | head tail regexFrom depth -> rest regex
 
-instance parseRegexMatchGroupGroupCloseError ::
-  ( Fail ErrorMissingOpen
-  ) =>
-  ParseRegexMatch ")" tail regexFrom 0 rest regexTo
+-- instance parseRegexMatchGroupGroupCloseError ::
+--   ( Fail ErrorMissingOpen
+--   ) =>
+--   ParseRegexMatch ")" tail regexFrom 0 rest regexTo
 
-else instance parseRegexMatchGroupClose ::
-  ParseRegexMatch ")" tail regex depth tail regex
+-- else instance parseRegexMatchGroupClose ::
+--   ParseRegexMatch ")" tail regex depth tail regex
 
-else instance parseRegexMatchGroupStart ::
-  ( Increment depth depthNext
-  , ParseRegexAtDepth tail depthNext rest' regexTo'
-  , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depth rest regexTo
-  ) =>
-  ParseRegexMatch "(" tail regexFrom depth rest regexTo
+-- else instance parseRegexMatchGroupStart ::
+--   ( Increment depth depthNext
+--   , ParseRegexAtDepth tail depthNext rest' regexTo'
+--   , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depth rest regexTo
+--   ) =>
+--   ParseRegexMatch "(" tail regexFrom depth rest regexTo
 
-else instance parseRegexMatchWildcard ::
-  ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
-  ) =>
-  ParseRegexMatch "." tail regexFrom depth rest regexTo
+-- else instance parseRegexMatchWildcard ::
+--   ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
+--   ) =>
+--   ParseRegexMatch "." tail regexFrom depth rest regexTo
 
-else instance parseRegexMatchStartOfStr ::
-  ( ParseRegexGo tail (Ast.StartOfStr ~ regexFrom) depth rest regexTo
-  ) =>
-  ParseRegexMatch "^" tail regexFrom depth rest regexTo
+-- else instance parseRegexMatchStartOfStr ::
+--   ( ParseRegexGo tail (Ast.StartOfStr ~ regexFrom) depth rest regexTo
+--   ) =>
+--   ParseRegexMatch "^" tail regexFrom depth rest regexTo
 
-else instance parseRegexMatchEndOfStr ::
-  ( ParseRegexGo tail (Ast.EndOfStr ~ regexFrom) depth rest regexTo
-  ) =>
-  ParseRegexMatch "$" tail regexFrom depth rest regexTo
+-- else instance parseRegexMatchEndOfStr ::
+--   ( ParseRegexGo tail (Ast.EndOfStr ~ regexFrom) depth rest regexTo
+--   ) =>
+--   ParseRegexMatch "$" tail regexFrom depth rest regexTo
 
-else instance parseRegexMatchOptional ::
-  ( ParseRegexGo tail (Ast.Optional regexHead ~ regexTail) depth rest regexTo
-  , IsQuantifiable regexHead
-  ) =>
-  ParseRegexMatch "?" tail (regexHead ~ regexTail) depth rest regexTo
+-- else instance parseRegexMatchOptional ::
+--   ( ParseRegexGo tail (Ast.Optional regexHead ~ regexTail) depth rest regexTo
+--   , IsQuantifiable regexHead
+--   ) =>
+--   ParseRegexMatch "?" tail (regexHead ~ regexTail) depth rest regexTo
 
-else instance parseRegexMatchOneOrMore ::
-  ( ParseRegexGo tail (Ast.OneOrMore regexHead ~ regexTail) depth rest regexTo
-  , IsQuantifiable regexHead
-  ) =>
-  ParseRegexMatch "+" tail (regexHead ~ regexTail) depth rest regexTo
+-- else instance parseRegexMatchOneOrMore ::
+--   ( ParseRegexGo tail (Ast.OneOrMore regexHead ~ regexTail) depth rest regexTo
+--   , IsQuantifiable regexHead
+--   ) =>
+--   ParseRegexMatch "+" tail (regexHead ~ regexTail) depth rest regexTo
 
-else instance parseRegexMatchMany ::
-  ( ParseRegexGo tail (Ast.Many regexHead ~ regexTail) depth rest regexTo
-  , IsQuantifiable regexHead
-  ) =>
-  ParseRegexMatch "*" tail (regexHead ~ regexTail) depth rest regexTo
+-- else instance parseRegexMatchMany ::
+--   ( ParseRegexGo tail (Ast.Many regexHead ~ regexTail) depth rest regexTo
+--   , IsQuantifiable regexHead
+--   ) =>
+--   ParseRegexMatch "*" tail (regexHead ~ regexTail) depth rest regexTo
 
-else instance parseRegexMatchAlt ::
-  ( ParseRegexGo tail regexTail depth rest' regexTo
-  , ParseRegexGo rest' (Ast.Alt regexHead regexTo ~ regexTail) depth rest regexTo
-  ) =>
-  ParseRegexMatch "|" tail (regexHead ~ regexTail) depth rest regexTo
+-- else instance parseRegexMatchAlt ::
+--   ( ParseRegexGo tail regexTail depth rest' regexTo
+--   , ParseRegexGo rest' (Ast.Alt regexHead regexTo ~ regexTail) depth rest regexTo
+--   ) =>
+--   ParseRegexMatch "|" tail (regexHead ~ regexTail) depth rest regexTo
 
-else instance parseRegexMatchQuote ::
-  ( ParseRegexGo tail' (Ast.Lit char ~ regexFrom) depth rest regexTo
-  , Sym.Cons head' tail' tail
-  , SymIsChar head' char
-  ) =>
-  ParseRegexMatch "\\" tail regexFrom depth rest regexTo
+-- else instance parseRegexMatchQuote ::
+--   ( ParseRegexGo tail' (Ast.Lit char ~ regexFrom) depth rest regexTo
+--   , Sym.Cons head' tail' tail
+--   , SymIsChar head' char
+--   ) =>
+--   ParseRegexMatch "\\" tail regexFrom depth rest regexTo
 
-else instance parseRegexMatchLit ::
+instance parseRegexMatchLit ::
   ( ParseRegexGo tail (Ast.Lit char ~ regexFrom) depth rest regexTo
   , SymIsChar head char
   ) =>

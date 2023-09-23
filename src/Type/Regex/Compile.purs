@@ -15,42 +15,42 @@ class
 instance compileRegexNil ::
   CompileRegex Ast.Nil R.Nil
 
-instance compileRegexWildcard ::
-  CompileRegex Ast.Wildcard R.Wildcard
+-- instance compileRegexWildcard ::
+--   CompileRegex Ast.Wildcard R.Wildcard
 
-instance compileRegexCharClass ::
-  ( CompileCharClass charClass positive regex
-  ) =>
-  CompileRegex (Ast.RegexCharClass charClass positive) regex
+-- instance compileRegexCharClass ::
+--   ( CompileCharClass charClass positive regex
+--   ) =>
+--   CompileRegex (Ast.RegexCharClass charClass positive) regex
 
 instance compileRegexLit ::
   CompileRegex (Ast.Lit char) (R.Lit char True)
 
-instance compileRegexEndOfStr ::
-  CompileRegex Ast.EndOfStr R.EndOfStr
+-- instance compileRegexEndOfStr ::
+--   CompileRegex Ast.EndOfStr R.EndOfStr
 
-instance compileRegexStartOfStr ::
-  CompileRegex Ast.StartOfStr R.StartOfStr
+-- instance compileRegexStartOfStr ::
+--   CompileRegex Ast.StartOfStr R.StartOfStr
 
-instance compileRegexOptional ::
-  ( CompileRegex ast regex
-  ) =>
-  CompileRegex (Ast.Optional ast) (R.Alt regex R.Nil)
+-- instance compileRegexOptional ::
+--   ( CompileRegex ast regex
+--   ) =>
+--   CompileRegex (Ast.Optional ast) (R.Alt regex R.Nil)
 
-instance compileRegexOneOrMore ::
-  ( CompileRegex ast regex
-  ) =>
-  CompileRegex (Ast.OneOrMore ast) (R.Cat regex (R.Many regex))
+-- instance compileRegexOneOrMore ::
+--   ( CompileRegex ast regex
+--   ) =>
+--   CompileRegex (Ast.OneOrMore ast) (R.Cat regex (R.Many regex))
 
-instance compileRegexMany ::
-  ( CompileRegex ast regex
-  ) =>
-  CompileRegex (Ast.Many ast) (R.Many regex)
+-- instance compileRegexMany ::
+--   ( CompileRegex ast regex
+--   ) =>
+--   CompileRegex (Ast.Many ast) (R.Many regex)
 
-instance compileRegexGroup ::
-  ( CompileRegex ast regex
-  ) =>
-  CompileRegex (Ast.Group ast) (R.Group regex)
+-- instance compileRegexGroup ::
+--   ( CompileRegex ast regex
+--   ) =>
+--   CompileRegex (Ast.Group ast) (R.Group regex)
 
 instance compileRegexCat ::
   ( CompileRegex ast1 regex1
@@ -58,11 +58,11 @@ instance compileRegexCat ::
   ) =>
   CompileRegex (Ast.Cat ast1 ast2) (R.Cat regex1 regex2)
 
-instance compileRegexAlt ::
-  ( CompileRegex ast1 regex1
-  , CompileRegex ast2 regex2
-  ) =>
-  CompileRegex (Ast.Alt ast1 ast2) (R.Alt regex1 regex2)
+-- instance compileRegexAlt ::
+--   ( CompileRegex ast1 regex1
+--   , CompileRegex ast2 regex2
+--   ) =>
+--   CompileRegex (Ast.Alt ast1 ast2) (R.Alt regex1 regex2)
 
 --------------------------------------------------------------------------------
 --- CompileCharClass

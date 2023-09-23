@@ -1,5 +1,7 @@
 module Type.Char
   ( Char'
+  , UnsafeMkChar
+  , class IsEmptyOrFail
   , class SymIsChar
   , symIsChar
   )
@@ -12,7 +14,7 @@ import Prim.TypeError (class Fail, Beside, Doc, Text)
 
 foreign import data Char' :: Type
 
-foreign import data MkChar :: Symbol -> Char'
+foreign import data UnsafeMkChar :: Symbol -> Char'
 
 type CharError s = Text "Expected a single character, got: \"" <> Text s <> Text "\""
 
@@ -34,7 +36,7 @@ else instance symIsCharNonEmpty ::
   ( Sym.Cons head tail sym
   , IsEmptyOrFail (CharError sym) tail
   ) =>
-  SymIsChar sym (MkChar head)
+  SymIsChar sym (UnsafeMkChar head)
 
 --------------------------------------------------------------------------------
 

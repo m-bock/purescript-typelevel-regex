@@ -1,7 +1,5 @@
 module Type.Regex where
 
-import Prelude
-
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Prim.Boolean (True)
 import Type.Proxy (Proxy(..))
@@ -16,13 +14,8 @@ instance
   ( ParseRegex regexStr regexAst
   , CompileRegex regexAst regex
   , ScanRegex regex str True
-  , IsSymbol str
   ) =>
   TestRegex regexStr str
-
-
-
-
 
 guard :: forall @regex @str. TestRegex regex str => IsSymbol str => String
 guard = reflectSymbol (Proxy :: Proxy str)
