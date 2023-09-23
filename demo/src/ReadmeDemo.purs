@@ -10,13 +10,15 @@ Apply regular expressions to type level strings.
 
 ## Examples
 
-Regexes int he following examples are simplified for readability.
+Regexes in the following examples are simplified.
 In reality would be a bit more complex.
 -}
 
 module ReadmeDemo where
 
+import Type.Proxy (Proxy(..))
 import Type.Regex as Regex
+import Type.Regex.Parse (parseRegex)
 
 {-
 The following will only compile if the the string matches the regex.
@@ -26,8 +28,13 @@ it reflects the type level input string if the regex matches.
 
 -}
 
+type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
+
 simple :: String
-simple = Regex.guard @"hello" @"hello"
+simple = Regex.guard @"ha" @"ha"
+
+-- p :: Proxy ?a
+-- p = parseRegex @"a"
 
 -- email :: String
 -- email = Regex.guard @"[a-z]@[a-z]\\.(com|org)" @"joe@doe.com"

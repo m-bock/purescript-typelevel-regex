@@ -2,7 +2,6 @@ module Type.Regex.Parse where
 
 import Prelude
 
-import Prim.Boolean (False, True)
 import Prim.Int as Int
 import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Doc, Text)
@@ -171,18 +170,18 @@ parseCharacterClass = unit
 
 --- ParseCharacterClassNegate
 
-class ParseCharacterClassNegate (head :: Symbol) (tail :: Symbol) (rest :: Symbol) (chars :: Ast.CharClass) (positive :: Boolean)
+-- class ParseCharacterClassNegate (head :: Symbol) (tail :: Symbol) (rest :: Symbol) (chars :: Ast.CharClass) (positive :: Boolean)
 
-instance parseCharacterClassNegateMatch ::
-  ( ParseCharacterClassGo tail Ast.CharClassNil rest charClass
-  ) =>
-  ParseCharacterClassNegate "^" tail rest charClass False
+-- instance parseCharacterClassNegateMatch ::
+--   ( ParseCharacterClassGo tail Ast.CharClassNil rest charClass
+--   ) =>
+--   ParseCharacterClassNegate "^" tail rest charClass False
 
-else instance parseCharacterClassNegateNoMatch ::
-  ( ParseCharacterClassGo sym Ast.CharClassNil rest charClass
-  , Sym.Cons head tail sym
-  ) =>
-  ParseCharacterClassNegate head tail rest charClass True
+-- else instance parseCharacterClassNegateNoMatch ::
+--   ( ParseCharacterClassGo sym Ast.CharClassNil rest charClass
+--   , Sym.Cons head tail sym
+--   ) =>
+--   ParseCharacterClassNegate head tail rest charClass True
 
 --- ParseCharacterClassGo
 

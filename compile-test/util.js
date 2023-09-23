@@ -8,8 +8,6 @@ const run = (src) => {
   fs.writeFileSync(testFile, dedent(src));
   const result = cp.spawnSync("spago", ["build", "--json-errors"]);
 
-  fs.rmSync(testFile);
-
   return result;
 };
 
@@ -17,6 +15,7 @@ export const shouldNotCompile = (src, expectedError) => {
   const result = run(src);
 
   if (result.status === 0) {
+    console.log("Expected compilation to fail, but it succeeded.")
     process.exit(1);
   }
 
@@ -26,8 +25,11 @@ export const shouldNotCompile = (src, expectedError) => {
   const errorMsg = resultJson.errors[0].message;
 
   if (!errorMsg.includes(expectedError)) {
+    console.log(`Expected error message to include: ${expectedError}`);
     process.exit(1);
   }
+
+  fs.rmSync(testFile);
 };
 
 export const shouldCompile = (src) => {
@@ -41,4 +43,6 @@ export const shouldCompile = (src) => {
 
     process.exit(1);
   }
+
+  fs.rmSync(testFile);
 };
