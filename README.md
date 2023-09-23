@@ -14,7 +14,7 @@ module ReadmeDemo where
 import Type.Regex as Regex
 
 -- email :: String
--- email = Regex.stringGuard @"[a-z]@[a-z]\\.(com|org)" @"joe@doe.com"
+-- email = Regex.guard @"[a-z]@[a-z]\\.(com|org)" @"joe@doe.com"
 ```
 
 

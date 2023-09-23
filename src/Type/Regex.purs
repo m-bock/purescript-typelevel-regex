@@ -24,5 +24,5 @@ instance
 
 
 
-stringGuard :: forall @regex @str. TestRegex regex str => IsSymbol str => String
-stringGuard = reflectSymbol (Proxy :: Proxy str)
+guard :: forall @regex @str. TestRegex regex str => IsSymbol str => String
+guard = reflectSymbol (Proxy :: Proxy str)
