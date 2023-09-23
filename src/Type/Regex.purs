@@ -10,9 +10,7 @@ import Type.Regex.Match (class ScanRegex)
 import Type.Regex.Parse (class ParseRegex)
 
 class
-  C (regex :: Symbol) (str :: Symbol)
-  where
-  f :: Proxy regex -> Proxy str -> String
+  TestRegex (regex :: Symbol) (str :: Symbol)
 
 instance
   ( ParseRegex regexStr regexAst
@@ -20,9 +18,11 @@ instance
   , ScanRegex regex str True
   , IsSymbol str
   ) =>
-  C regexStr str
-  where
-  f _ _ = reflectSymbol (Proxy :: Proxy str)
+  TestRegex regexStr str
 
-g :: forall @regex @str. C regex str => String
-g = f (Proxy :: Proxy regex) (Proxy :: Proxy str)
+
+
+
+
+stringGuard :: forall @regex @str. TestRegex regex str => IsSymbol str => String
+stringGuard = reflectSymbol (Proxy :: Proxy str)
