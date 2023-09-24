@@ -14,7 +14,7 @@ foreign import data Regex :: Type
 -- | Empty Regex
 foreign import data Nil :: Regex
 
--- | `*`
+-- | `.`
 foreign import data Wildcard :: Regex
 
 -- | `[a-z123]`

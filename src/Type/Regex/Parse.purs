@@ -4,7 +4,7 @@ import Prelude
 
 import Prim.Int as Int
 import Prim.Symbol as Sym
-import Prim.TypeError (class Fail, Beside, Doc, Text)
+import Prim.TypeError (class Fail, class Warn, Beside, Doc, Text)
 import Type.Char (class SymIsChar)
 import Type.Proxy (Proxy(..))
 import Type.Regex.Ast (type (~))
@@ -35,7 +35,7 @@ class
   | spec -> regex
 
 instance parseRegexInst ::
-  ( ParseRegexAtDepth spec 0 0 "" regex
+  ( ParseRegexAtDepth spec 0 "" regex
   ) =>
   ParseRegex spec regex
 
@@ -45,14 +45,14 @@ parseRegex = Proxy
 --- ParseRegexAtDepth
 
 class
-  ParseRegexAtDepth (spec :: Symbol) (depthFrom :: Int) (depthTo :: Int) (rest :: Symbol) (regex :: Ast.Regex)
-  | spec depthFrom -> depthTo rest regex
+  ParseRegexAtDepth (spec :: Symbol) (depth :: Int) (rest :: Symbol) (regex :: Ast.Regex)
+  | spec depth  -> rest regex
 
 instance parseRegexAtDepth ::
-  ( ParseRegexGo spec Ast.Nil depthFrom depthTo rest regex
+  ( ParseRegexGo spec Ast.Nil depth  rest regex
   , ReverseRegex regex regex'
   ) =>
-  ParseRegexAtDepth spec depthFrom depthTo rest regex'
+  ParseRegexAtDepth spec depth  rest regex'
 
 --- ParseRegexGo
 
@@ -60,24 +60,23 @@ class
   ParseRegexGo
     (sym :: Symbol)
     (regexFrom :: Ast.Regex)
-    (depthFrom :: Int)
-    (depthTo :: Int)
+    (depth :: Int)
     (rest :: Symbol)
     (regexTo :: Ast.Regex)
-  | sym regexFrom depthFrom -> depthTo rest regexTo
+  | sym regexFrom depth  ->  rest regexTo
 
-instance parseRegexGoEnd :: ParseRegexGo "" regex 0 0 "" regex
+instance parseRegexGoEnd :: ParseRegexGo "" regex 0 "" regex
 
 else instance parseRegexGoEndError ::
   ( Fail ErrorMissingClose
   ) =>
-  ParseRegexGo "" regex depthFrom depthTo "" regex
+  ParseRegexGo "" regex depth  "" regex
 
 else instance parseRegexGoCons ::
   ( Sym.Cons head tail sym
-  , ParseRegexMatch head tail regexFrom depthFrom depthTo rest regexTo
+  , ParseRegexMatch head tail regexFrom depth  rest regexTo
   ) =>
-  ParseRegexGo sym regexFrom depthFrom depthTo rest regexTo
+  ParseRegexGo sym regexFrom depth  rest regexTo
 
 --- ParseRegexMatch
 
@@ -86,27 +85,25 @@ class
     (head :: Symbol)
     (tail :: Symbol)
     (regexFrom :: Ast.Regex)
-    (depthFrom :: Int)
-    (depthTo :: Int)
+    (depth :: Int)
     (rest :: Symbol)
     (regex :: Ast.Regex)
-  | head tail regexFrom depthFrom -> depthTo rest regex
+  | head tail regexFrom depth  -> rest regex
 
 instance parseRegexMatchGroupGroupCloseError ::
   ( Fail ErrorMissingOpen
   ) =>
-  ParseRegexMatch ")" tail regexFrom 0 depthTo rest regexTo
+  ParseRegexMatch ")" tail regexFrom 0  rest regexTo
 
 else instance parseRegexMatchGroupClose ::
-  (Int.Add depthTo 1 depthFrom) =>
-  ParseRegexMatch ")" tail regex depthFrom depthTo tail regex
+  ParseRegexMatch ")" tail regex depth  tail regex
 
 else instance parseRegexMatchGroupStart ::
-  ( Increment depthFrom depthNext
-  , ParseRegexAtDepth tail depthNext depthTo rest' regexTo'
-  , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depthTo depthTo' rest regexTo
+  ( Increment depth depthNext
+  , ParseRegexAtDepth tail depthNext rest' regexTo'
+  , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depth rest regexTo
   ) =>
-  ParseRegexMatch "(" tail regexFrom depthFrom depthTo' rest regexTo
+  ParseRegexMatch "(" tail regexFrom depth rest regexTo
 
 -- else instance parseRegexMatchWildcard ::
 --   ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
@@ -142,11 +139,15 @@ else instance parseRegexMatchGroupStart ::
 --   ParseRegexMatch "*" tail (regexHead ~ regexTail) depth rest regexTo
 
 else instance parseRegexMatchAlt ::
-  ( ParseRegexAtDepth tail depthFrom depthMid rest regexTo
+  ( ParseRegexAtDepth tail depth rest regexTo
+  , Decrement depth depth'
   , ReverseRegex regex regex'
-  , ParseRegexGo rest (Ast.Alt regex' regexTo ~ Ast.Nil) depthMid depthTo rest' regexTo'
   ) =>
-  ParseRegexMatch "|" tail regex depthFrom depthTo rest' regexTo'
+  ParseRegexMatch "|" tail regex depth rest (Ast.Alt regex' regexTo ~ Ast.Nil)
+  
+  --(Ast.Group (Ast.Alt regex regexTo'))
+
+---
 
 -- else instance parseRegexMatchQuote ::
 --   ( ParseRegexGo tail' (Ast.Lit char ~ regexFrom) depth rest regexTo
@@ -156,10 +157,23 @@ else instance parseRegexMatchAlt ::
 --   ParseRegexMatch "\\" tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchLit ::
-  ( ParseRegexGo tail (Ast.Lit char ~ regexFrom) depthFrom depthTo rest regexTo
+  ( ParseRegexGo tail (Ast.Lit char ~ regexFrom) depth  rest regexTo
   , SymIsChar head char
   ) =>
-  ParseRegexMatch head tail regexFrom depthFrom depthTo rest regexTo
+  ParseRegexMatch head tail regexFrom depth  rest regexTo
+
+
+---
+
+-- class Finalize (regex :: Ast.Regex) (regex1 :: Ast.Regex) (out :: Ast.Regex)
+--   | regex regex1 -> out
+
+-- instance Finalize (Ast.Group ast) regex1 (Ast.Group (Ast.Alt regex1 ast))
+
+-- else instance Finalize  ast regex1 (Ast.Alt regex1 ast)
+
+---
+
 
 --------------------------------------------------------------------------------
 ---  ParseCharClass
@@ -260,6 +274,17 @@ instance increment ::
   Increment n n'
 
 --------------------------------------------------------------------------------
+--- Decrement
+--------------------------------------------------------------------------------
+
+class Decrement (n :: Int) (n' :: Int) | n -> n'
+
+instance decrement ::
+  ( Int.Add n' 1 n
+  ) =>
+  Decrement n n'
+
+--------------------------------------------------------------------------------
 --- ConsOrFail
 --------------------------------------------------------------------------------
 
@@ -319,8 +344,10 @@ class
   ReverseRegexGo (regex :: Ast.Regex) (regexFrom :: Ast.Regex) (regexTo :: Ast.Regex)
   | regex regexFrom -> regexTo
 
+
 instance reverseRegexGoNil ::
   ReverseRegexGo Ast.Nil a a
+
 
 else instance reverseRegexGoCons ::
   ( ReverseRegexGo tail (head ~ regexFrom) regexTo

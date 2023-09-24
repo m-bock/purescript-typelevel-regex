@@ -17,7 +17,7 @@ In reality would be a bit more complex.
 module ReadmeDemo where
 
 import Type.Proxy (Proxy(..))
-import Type.Regex (compileRegex)
+import Type.Regex (compileRegex, parse_)
 import Type.Regex as Regex
 import Type.Regex.Parse (parseRegex)
 
@@ -31,11 +31,16 @@ it reflects the type level input string if the regex matches.
 
 type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
 
-simple :: String
-simple = Regex.guard @"hello|world|abc" @"abc"
+-- simple :: String
+-- simple = Regex.guard @"hello(abc|(y|z))k" @"helloabck"
 
 -- p :: Proxy ?a
 -- p = parseRegex @"(a|b)"
+
+p2 :: Proxy ?a
+p2 = parse_ @"hello(abc|y|(y|zz)j)k"
+
+-- "foo(b|(c|a))bar"
 
 -- c :: Proxy ?a
 -- c = compileRegex @"(a|(cd))"
