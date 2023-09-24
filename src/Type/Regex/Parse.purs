@@ -144,8 +144,6 @@ else instance parseRegexMatchAlt ::
   , ReverseRegex regex regex'
   ) =>
   ParseRegexMatch "|" tail regex depth rest (Ast.Alt regex' regexTo ~ Ast.Nil)
-  
-  --(Ast.Group (Ast.Alt regex regexTo'))
 
 ---
 

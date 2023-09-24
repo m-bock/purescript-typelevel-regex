@@ -34,6 +34,10 @@ class
 
 instance RegexAttemptGo R.Nil rest rest True
 
+else instance RegexAttemptGo (R.Alt regex R.Nil) "" "" True
+
+else instance RegexAttemptGo (R.Alt R.Nil regex) "" "" True
+
 else instance RegexAttemptGo regex "" "" False
 
 else instance
