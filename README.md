@@ -55,7 +55,7 @@ sample4 = Regex.guard @RegexURL @"ftp://hello.org/path/to/home"
 | Wildcards                   | `.`                      |
 | Match Start/End             | `^`, `$`                 |
 | Groups                      | `(abc)`, `(hello)`, ...  |
-| Alternatives                | `a|b|c`, `(foo|bar)`     |
+| Alternatives                | `a\|b\|c`, `(foo\|bar)`     |
 | Match Many                  | `(foo)*`                 |
 | Match Some                  | `(foo)+`                 |
 | Match Maybe                 | `(foo)?`                 |
