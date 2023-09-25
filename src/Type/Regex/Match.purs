@@ -11,11 +11,18 @@ import Type.Regex.RegexRep as R
 
 class ScanRegex (regex :: Regex) (str :: Symbol)
 
+
 instance
   ( RegexAttemptGo regex str rest matches
   , ScanRegexResult rest matches
   ) =>
-  ScanRegex regex str
+  ScanRegex (R.StartOfStr ~ regex) str
+
+-- instance
+--   ( RegexAttemptGo regex str rest matches
+--   , ScanRegexResult rest matches
+--   ) =>
+--   ScanRegex regex str
 
 --- ScanRegexResult
 
