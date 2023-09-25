@@ -110,15 +110,15 @@ else instance parseRegexMatchGroupStart ::
 --   ) =>
 --   ParseRegexMatch "." tail regexFrom depth rest regexTo
 
--- else instance parseRegexMatchStartOfStr ::
---   ( ParseRegexGo tail (Ast.StartOfStr ~ regexFrom) depth rest regexTo
---   ) =>
---   ParseRegexMatch "^" tail regexFrom depth rest regexTo
+else instance parseRegexMatchStartOfStr ::
+  ( ParseRegexGo tail (Ast.StartOfStr ~ regexFrom) depth rest regexTo
+  ) =>
+  ParseRegexMatch "^" tail regexFrom depth rest regexTo
 
--- else instance parseRegexMatchEndOfStr ::
---   ( ParseRegexGo tail (Ast.EndOfStr ~ regexFrom) depth rest regexTo
---   ) =>
---   ParseRegexMatch "$" tail regexFrom depth rest regexTo
+else instance parseRegexMatchEndOfStr ::
+  ( ParseRegexGo tail (Ast.EndOfStr ~ regexFrom) depth rest regexTo
+  ) =>
+  ParseRegexMatch "$" tail regexFrom depth rest regexTo
 
 -- else instance parseRegexMatchOptional ::
 --   ( ParseRegexGo tail (Ast.Optional regexHead ~ regexTail) depth rest regexTo

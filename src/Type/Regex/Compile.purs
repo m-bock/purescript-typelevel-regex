@@ -31,11 +31,11 @@ instance compileRegexNil ::
 else instance compileRegexLit ::
   CompileRegex (Ast.Lit char) (R.Lit char True)
 
--- instance compileRegexEndOfStr ::
---   CompileRegex Ast.EndOfStr R.EndOfStr
+else instance compileRegexEndOfStr ::
+  CompileRegex Ast.EndOfStr R.EndOfStr
 
--- instance compileRegexStartOfStr ::
---   CompileRegex Ast.StartOfStr R.StartOfStr
+else instance compileRegexStartOfStr ::
+  CompileRegex Ast.StartOfStr R.StartOfStr
 
 -- instance compileRegexOptional ::
 --   ( CompileRegex ast regex

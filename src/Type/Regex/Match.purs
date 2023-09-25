@@ -4,6 +4,8 @@ import Prim.Boolean (False, True)
 import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Above, Beside, Text)
 import Type.Char (UnsafeMkChar)
+import Type.Data.Boolean (class And, class Or)
+import Type.Equality (class TypeEquals)
 import Type.Regex.RegexRep (type (~), Regex)
 import Type.Regex.RegexRep as R
 
@@ -19,7 +21,7 @@ instance
 
 class ScanRegexResult (rest :: Symbol) (matches :: Boolean)
 
-instance ScanRegexResult "" True
+instance ScanRegexResult rest True
 
 else instance
   ( Fail
@@ -36,21 +38,49 @@ class
   RegexAttemptGo (regex :: Regex) (str :: Symbol) (rest :: Symbol) (matches :: Boolean)
   | regex str -> rest matches
 
-instance RegexAttemptGo R.Nil rest rest True
+instance regexAttemptGoRegexEnd ::
+  RegexAttemptGo R.Nil str str True
 
-else instance RegexAttemptGo (R.Alt regex R.Nil) "" "" True
+else instance regexAttemptGoStringEnd ::
+  ( IsFinalRegex regex True
+  ) =>
+  RegexAttemptGo regex "" "" True
 
-else instance RegexAttemptGo (R.Alt R.Nil regex) "" "" True
-
-else instance RegexAttemptGo (R.Many regex) "" "" True
-
-else instance RegexAttemptGo regex "" "" False
-
-else instance
+else instance regexAttemptGoStringContinue ::
   ( Sym.Cons head tail str
   , RegexAttemptMatch regex head tail rest matches
   ) =>
   RegexAttemptGo regex str rest matches
+
+--- IsFinalRegex
+
+class
+  IsFinalRegex (regex :: Regex) (bool :: Boolean)
+  | regex -> bool
+
+instance IsFinalRegex R.EndOfStr True
+
+else instance IsFinalRegex R.Nil True
+
+else instance
+  ( IsFinalRegex regex1 bool1
+  , IsFinalRegex regex2 bool2
+  , Or bool1 bool2 bool
+  ) =>
+  IsFinalRegex (R.Alt regex1 regex2) bool
+
+else instance
+  ( IsFinalRegex regex1 bool1
+  , IsFinalRegex regex2 bool2
+  , And bool1 bool2 bool
+  ) =>
+  IsFinalRegex (R.Cat regex1 regex2) bool
+
+else instance
+  IsFinalRegex (R.Many regex) True
+
+else instance
+  IsFinalRegex regex False
 
 --- RegexAttemptMatch
 
@@ -134,10 +164,10 @@ class
 -- instance
 --   RegexManyResult True regex backtrace "" "" True
 
-instance
+instance regexManyResultContinue ::
   ( RegexAttemptGo (R.Many regex) restIn restOut matches
   ) =>
   RegexManyResult True regex backtrace restIn restOut matches
 
-else instance
+else instance regexManyResultStop ::
   RegexManyResult False regex backtrace restIn backtrace True

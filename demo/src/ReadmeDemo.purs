@@ -35,7 +35,7 @@ type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
 -- sample = Regex.guard @"http(s|)://(a|b|c)(a|b|c)* (de|com|org)(/(a|b|c)(a|b|c)*)*(?q|)" @"https://aaac org/aba/aa?q"
 
 sample2 :: String
-sample2 = Regex.guard @"a*" @""
+sample2 = Regex.guard @"a$" @"a"
 
 -- http(s|):(a|b)
 
@@ -52,7 +52,7 @@ sample2 = Regex.guard @"a*" @""
 -- "foo(b|(c|a))bar"
 
 -- c :: Proxy ?a
--- c = compileRegex @"(a|b)*"
+-- c = compileRegex @"$"
 
 -- email :: String
 -- email = Regex.guard @"[a-z]@[a-z]\\.(com|org)" @"joe@doe.com"
