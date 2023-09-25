@@ -97,6 +97,9 @@ instance
   RegexAttemptMatch (R.Lit (UnsafeMkChar head)) head tail tail True
 
 else instance
+  RegexAttemptMatch R.Wildcard head tail tail True
+
+else instance
   ( Contains chars head matches
   , Not matches matches'
   ) =>

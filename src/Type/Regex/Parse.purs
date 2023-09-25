@@ -106,10 +106,10 @@ else instance parseRegexMatchGroupStart ::
   ) =>
   ParseRegexMatch "(" tail regexFrom depth rest regexTo
 
--- else instance parseRegexMatchWildcard ::
---   ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
---   ) =>
---   ParseRegexMatch "." tail regexFrom depth rest regexTo
+else instance parseRegexMatchWildcard ::
+  ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
+  ) =>
+  ParseRegexMatch "." tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchStartOfStr ::
   ( ParseRegexGo tail (Ast.StartOfStr ~ regexFrom) depth rest regexTo
@@ -204,21 +204,6 @@ parseCharacterClass
    . ParseCharacterClass sym rest chars positive
   => Unit
 parseCharacterClass = unit
-
---- ParseCharacterClassNegate
-
--- class ParseCharacterClassNegate (head :: Symbol) (tail :: Symbol) (rest :: Symbol) (chars :: Ast.CharClass) (positive :: Boolean)
-
--- instance parseCharacterClassNegateMatch ::
---   ( ParseCharacterClassGo tail Ast.CharClassNil rest charClass
---   ) =>
---   ParseCharacterClassNegate "^" tail rest charClass False
-
--- else instance parseCharacterClassNegateNoMatch ::
---   ( ParseCharacterClassGo sym Ast.CharClassNil rest charClass
---   , Sym.Cons head tail sym
---   ) =>
---   ParseCharacterClassNegate head tail rest charClass True
 
 --- ParseCharacterClassGo
 

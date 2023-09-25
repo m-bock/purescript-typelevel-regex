@@ -24,8 +24,8 @@ class
 instance compileRegexNil ::
   CompileRegex Ast.Nil R.Nil
 
--- instance compileRegexWildcard ::
---   CompileRegex Ast.Wildcard R.Wildcard
+else instance compileRegexWildcard ::
+  CompileRegex Ast.Wildcard R.Wildcard
 
 else instance compileRegexCharClass ::
   ( CompileCharClass charClass positive regex
