@@ -53,18 +53,14 @@ sample4 = Regex.guard @RegexURL @"ftp://hello.org/path/to/home"
 | --------------------------- | ------------------------ |
 | Character literals          | `a`, `b`, `c`, ...       |
 | Wildcards                   | `.`                      |
-| Match Start/End             | `^`, "$"                 |
+| Match Start/End             | `^`, `$`                 |
 | Groups                      | `(abc)`, `(hello)`, ...  |
 | Alternatives                | `a|b|c`, `(foo|bar)`     |
 | Match Many                  | `(foo)*`                 |
 | Match Some                  | `(foo)+`                 |
 | Match Maybe                 | `(foo)?`                 |
-| Character Classes           | `[abc]`, [a-z0-9_]       |
-| Negative Character Classes  | `[^abc]`, [^a-z0-9_]     |
+| Character Classes           | `[abc]`, `[a-z0-9_]`     |
+| Negative Character Classes  | `[^abc]`, `[^a-z0-9_]`   |
+| Escapes                     | `\\?`, `\\[`             |
 
 
-
-
-```hs
-
-```
