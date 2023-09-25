@@ -1,7 +1,9 @@
 module Type.Regex.Compile where
 
-import Prim.Boolean (True)
+import Prim.Boolean (False, True)
+import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Beside, Doc, Text)
+import Type.Char (UnsafeMkChar)
 import Type.Regex.Ast as Ast
 import Type.Regex.RegexRep as R
 
@@ -23,13 +25,13 @@ instance compileRegexNil ::
 -- instance compileRegexWildcard ::
 --   CompileRegex Ast.Wildcard R.Wildcard
 
--- instance compileRegexCharClass ::
---   ( CompileCharClass charClass positive regex
---   ) =>
---   CompileRegex (Ast.RegexCharClass charClass positive) regex
+else instance compileRegexCharClass ::
+  ( CompileCharClass charClass positive regex
+  ) =>
+  CompileRegex (Ast.RegexCharClass charClass positive) regex
 
 else instance compileRegexLit ::
-  CompileRegex (Ast.Lit char) (R.Lit char True)
+  CompileRegex (Ast.Lit char) (R.Lit char)
 
 else instance compileRegexEndOfStr ::
   CompileRegex Ast.EndOfStr R.EndOfStr
@@ -37,15 +39,15 @@ else instance compileRegexEndOfStr ::
 else instance compileRegexStartOfStr ::
   CompileRegex Ast.StartOfStr R.StartOfStr
 
--- instance compileRegexOptional ::
---   ( CompileRegex ast regex
---   ) =>
---   CompileRegex (Ast.Optional ast) (R.Alt regex R.Nil)
+else instance compileRegexOptional ::
+  ( CompileRegex ast regex
+  ) =>
+  CompileRegex (Ast.Optional ast) (R.Alt regex R.Nil)
 
--- instance compileRegexOneOrMore ::
---   ( CompileRegex ast regex
---   ) =>
---   CompileRegex (Ast.OneOrMore ast) (R.Cat regex (R.Many regex))
+else instance compileRegexOneOrMore ::
+  ( CompileRegex ast regex
+  ) =>
+  CompileRegex (Ast.OneOrMore ast) (R.Cat regex (R.Many regex))
 
 else instance compileRegexMany ::
   ( CompileRegex ast regex
@@ -84,12 +86,6 @@ else instance compileRegexErrUnexpected ::
   ) =>
   CompileRegex ast regex
 
--- instance compileRegexAlt ::
---   ( CompileRegex ast1 regex1
---   , CompileRegex ast2 regex2
---   ) =>
---   CompileRegex (Ast.Alt ast1 ast2) (R.Alt regex1 regex2)
-
 --------------------------------------------------------------------------------
 --- CompileCharClass
 --------------------------------------------------------------------------------
@@ -98,21 +94,49 @@ class
   CompileCharClass (charClass :: Ast.CharClass) (positive :: Boolean) (regex :: R.Regex)
   | charClass positive -> regex
 
-instance compileCharClass ::
-  ( CompileCharClassGo charClass positive R.Nil regex
+instance compileCharClassPositive ::
+  ( CompileCharClassPositiveGo charClass R.Never regex
   ) =>
-  CompileCharClass charClass positive regex
+  CompileCharClass charClass True regex
 
---- CompileCharClassGo
+else instance compileCharClassNegative ::
+  ( CompileCharClassNegativeGo charClass "" chars
+  ) =>
+  CompileCharClass charClass False (R.NotLit chars)
+
+--- CompileCharClassPositiveGo
 
 class
-  CompileCharClassGo (charClass :: Ast.CharClass) (positive :: Boolean) (regexFrom :: R.Regex) (regexTo :: R.Regex)
-  | charClass positive regexFrom -> regexTo
+  CompileCharClassPositiveGo
+    (charClass :: Ast.CharClass)
+    (regexFrom :: R.Regex)
+    (regexTo :: R.Regex)
+  | charClass regexFrom -> regexTo
 
-instance compileCharClassGoNil ::
-  CompileCharClassGo Ast.CharClassNil positive regex regex
+instance compileCharClassPositiveGoNil ::
+  CompileCharClassPositiveGo Ast.CharClassNil regex regex
 
-else instance compileCharClassGoLit ::
-  ( CompileCharClassGo charClass positive (R.Lit char positive R.~ regexFrom) regexTo
+else instance compileCharClassPositiveGoLit ::
+  ( CompileCharClassPositiveGo charClass (R.Alt (R.Lit char) regexFrom) regexTo
   ) =>
-  CompileCharClassGo (Ast.CharClassLit char charClass) positive regexFrom regexTo
+  CompileCharClassPositiveGo (Ast.CharClassLit char charClass) regexFrom regexTo
+
+---
+
+--- CompileCharClassNegativeGo
+
+class
+  CompileCharClassNegativeGo
+    (charClass :: Ast.CharClass)
+    (charsFrom :: Symbol)
+    (charsTo :: Symbol)
+  | charClass charsFrom -> charsTo
+
+instance compileCharClassNegativeGoNil ::
+  CompileCharClassNegativeGo Ast.CharClassNil chars chars
+
+else instance compileCharClassNegativeGoLit ::
+  ( CompileCharClassNegativeGo charClass chars' charsTo
+  , Sym.Append chars char chars'
+  ) =>
+  CompileCharClassNegativeGo (Ast.CharClassLit (UnsafeMkChar char) charClass) chars charsTo

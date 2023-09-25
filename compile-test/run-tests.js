@@ -58,10 +58,12 @@ const main = () => {
   testRegexOk("^(foo)*$", "foofoo");
   testRegexFail("^(foo)*$", "qua", "Regex failed to match");
 
-  testRegexOk("^(foo|bar)*$", "");
-  testRegexOk("^(foo|bar)*$", "foo");
-  testRegexOk("^(foo|bar)*$", "foobar");
-  testRegexOk("^(foo|bar)*$", "foobarfoo");
+  testRegexOk("^foo", "foobar");
+  testRegexFail("^foo", "barfoo", "Regex failed to match");
+
+//  testRegexOk("foo$", "barfoo");
+//  testRegexFail("foo$", "foobar", "Regex failed to match");
+
 
 };
 

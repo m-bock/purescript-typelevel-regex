@@ -9,6 +9,8 @@ foreign import data Regex :: Type
 
 foreign import data Nil :: Regex
 
+foreign import data Never :: Regex
+
 ---
 
 foreign import data EndOfStr :: Regex
@@ -17,7 +19,9 @@ foreign import data StartOfStr :: Regex
 
 foreign import data Wildcard :: Regex
 
-foreign import data Lit :: Char' -> Boolean -> Regex
+foreign import data Lit :: Char' -> Regex
+
+foreign import data NotLit :: Symbol -> Regex
 
 ---
 

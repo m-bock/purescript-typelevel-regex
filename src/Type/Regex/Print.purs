@@ -37,9 +37,22 @@ else instance
 
 else instance
   ( PrintRegex ast sym
-    , Sym.Append sym "*" sym'
-    ) =>
- PrintRegex (Ast.Many ast) sym'
+  , Sym.Append sym "*" sym'
+  ) =>
+  PrintRegex (Ast.Many ast) sym'
+
+else instance
+  ( PrintRegex ast sym
+  , Sym.Append sym "?" sym'
+  ) =>
+  PrintRegex (Ast.Optional ast) sym'
+
+else instance
+  ( PrintRegex ast sym
+  , Sym.Append sym "+" sym'
+  ) =>
+  PrintRegex (Ast.OneOrMore ast) sym'
+
 
 
 else instance (Fail (Text "Regex Print error")) => PrintRegex ast sym

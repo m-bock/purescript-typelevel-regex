@@ -4,13 +4,12 @@ import Prim.Boolean (False, True)
 import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Above, Beside, Text)
 import Type.Char (UnsafeMkChar)
-import Type.Data.Boolean (class And, class Or)
+import Type.Data.Boolean (class And, class Not, class Or)
 import Type.Equality (class TypeEquals)
 import Type.Regex.RegexRep (type (~), Regex)
 import Type.Regex.RegexRep as R
 
 class ScanRegex (regex :: Regex) (str :: Symbol)
-
 
 instance
   ( RegexAttemptGo regex str rest matches
@@ -96,7 +95,13 @@ class
   | regex head tail -> rest matches
 
 instance
-  RegexAttemptMatch (R.Lit (UnsafeMkChar head) True) head tail tail True
+  RegexAttemptMatch (R.Lit (UnsafeMkChar head)) head tail tail True
+
+else instance
+  ( Contains chars head matches
+  , Not matches matches'
+  ) =>
+  RegexAttemptMatch (R.NotLit chars) head tail tail matches'
 
 else instance
   ( Sym.Cons head tail str
@@ -124,6 +129,11 @@ else instance
   , RegexManyResult matches regex sym restIn rest' matches'
   ) =>
   RegexAttemptMatch (R.Many regex) head tail rest' matches'
+
+else instance
+  ( Sym.Cons head tail rest
+  ) =>
+  RegexAttemptMatch R.Never head tail rest False
 
 else instance
   RegexAttemptMatch regex head tail tail False
@@ -168,9 +178,6 @@ class
     (matches :: Boolean)
   | matched regex backtrace restIn -> restOut matches
 
--- instance
---   RegexManyResult True regex backtrace "" "" True
-
 instance regexManyResultContinue ::
   ( RegexAttemptGo (R.Many regex) restIn restOut matches
   ) =>
@@ -178,3 +185,33 @@ instance regexManyResultContinue ::
 
 else instance regexManyResultStop ::
   RegexManyResult False regex backtrace restIn backtrace True
+
+------------------------------------------------------------------------
+-- Contains
+------------------------------------------------------------------------
+
+class
+  Contains (chars :: Symbol) (char :: Symbol) (result :: Boolean)
+  | chars char -> result
+
+instance Contains "" char False
+
+else instance
+  ( Sym.Cons head tail sym
+  , ContainsMatch head tail char result
+  ) =>
+  Contains sym char result
+
+--- ContainsMatch
+
+class
+  ContainsMatch (head :: Symbol) (tail :: Symbol) (char :: Symbol) (result :: Boolean)
+  | head tail char -> result
+
+instance ContainsMatch char tail char True
+
+else instance
+  ( Contains tail char result
+  ) =>
+  ContainsMatch head tail char result
+
