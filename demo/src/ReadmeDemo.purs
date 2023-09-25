@@ -16,12 +16,7 @@ In reality would be a bit more complex.
 
 module ReadmeDemo where
 
-import Prelude
-
-import Type.Proxy (Proxy(..))
-import Type.Regex (compileRegex, parse_)
 import Type.Regex as Regex
-import Type.Regex.Parse (parseCharacterClass, parseRegex)
 
 {-
 The following will only compile if the the string matches the regex.
@@ -31,26 +26,46 @@ it reflects the type level input string if the regex matches.
 
 -}
 
-type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
+type RegexURL =
+  "^(ftp|https?)://[a-z][a-z0-9]*\\.(app|com|org)(/[a-z]+)*(\\?([a-z]+))?$"
 
-sample :: String
-sample = Regex.guard
-  @"^http?://[a-z][a-z0-9]*\\.(app|com|org)(/[a-z]+)*(\\?([a-z]+))?$"
-  @"http://hello.com/path/to?query"
+sample1 :: String
+sample1 = Regex.guard @RegexURL @"http://hello.com/path/to?query"
 
+sample2 :: String
+sample2 = Regex.guard @RegexURL @"http://hello.com/path/to"
 
-{-
+sample3 :: String
+sample3 = Regex.guard @RegexURL @"https://hello99.org/path/to"
+
+sample4 :: String
+sample4 = Regex.guard @RegexURL @"ftp://hello.org/path/to/home"
 
 {-
 
 ## Supported regex features
 
-|                    |                          |
-| ------------------ | ------------------------ |
-| Character literals | `a`, `b`, `c`, ...       |
-| Concatenation      | `abc`, `hello`, ...      |
-| Groups             | `(abc)`, `(hello)`, ...  |
-| Alternatives       | `a|b|c`, `(foo|bar)`     |
-| Match Many         | `(foo)*`                 |
+|                             |                          |
+| --------------------------- | ------------------------ |
+| Character literals          | `a`, `b`, `c`, ...       |
+|                             |                          |
+| Wildcards                   | `.`                      |
+|                             |                          |
+| Match Start/End             | `^`, "$"                 |
+|                             |                          |
+| Groups                      | `(abc)`, `(hello)`, ...  |
+|                             |                          |
+| Alternatives                | `a|b|c`, `(foo|bar)`     |
+|                             |                          |
+| Match Many                  | `(foo)*`                 |
+|                             |                          |
+| Match Some                  | `(foo)+`                 |
+|                             |                          |
+| Match Maybe                 | `(foo)?`                 |
+|                             |                          |
+| Character Classes           | `[abc]`, [a-z0-9_]       |
+|                             |                          |
+| Negative Character Classes  | `[^abc]`, [^a-z0-9_]     |
+
 
 -}
