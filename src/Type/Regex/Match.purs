@@ -2,7 +2,7 @@ module Type.Regex.Match where
 
 import Prim.Boolean (False, True)
 import Prim.Symbol as Sym
-import Prim.TypeError (class Fail, Beside, Text)
+import Prim.TypeError (class Fail, Above, Beside, Text)
 import Type.Char (UnsafeMkChar)
 import Type.Regex.RegexRep (type (~), Regex)
 import Type.Regex.RegexRep as R
@@ -21,10 +21,14 @@ class ScanRegexResult (rest :: Symbol) (matches :: Boolean)
 
 instance ScanRegexResult "" True
 
-instance
-  ( Fail (Beside (Text "Regex failed to match. Rest:") (Text rest))
+else instance
+  ( Fail
+      ( Above
+          (Text "Regex failed to match.")
+          (Beside (Text "Unmateched rest is: ") (Text rest))
+      )
   ) =>
-  ScanRegexResult rest False
+  ScanRegexResult rest matches
 
 --- RegexAttemptGo
 
@@ -37,6 +41,8 @@ instance RegexAttemptGo R.Nil rest rest True
 else instance RegexAttemptGo (R.Alt regex R.Nil) "" "" True
 
 else instance RegexAttemptGo (R.Alt R.Nil regex) "" "" True
+
+else instance RegexAttemptGo (R.Many regex) "" "" True
 
 else instance RegexAttemptGo regex "" "" False
 
@@ -76,6 +82,13 @@ else instance
   RegexAttemptMatch (R.Alt regex1 regex2) head tail rest' matches'
 
 else instance
+  ( Sym.Cons head tail sym
+  , RegexAttemptGo regex sym restIn matches
+  , RegexManyResult matches regex sym restIn rest' matches'
+  ) =>
+  RegexAttemptMatch (R.Many regex) head tail rest' matches'
+
+else instance
   RegexAttemptMatch regex head tail tail False
 
 --- RegexAttemptMatchCatResult
@@ -105,3 +118,26 @@ else instance
   ( RegexAttemptGo regex restIn restOut matches
   ) =>
   RegexAttemptMatchAltResult regex False restInLeft restIn restOut matches
+
+--- RegexManyResult
+
+class
+  RegexManyResult
+    (matched :: Boolean)
+    (regex :: Regex)
+    (backtrace :: Symbol)
+    (restIn :: Symbol)
+    (restOut :: Symbol)
+    (matches :: Boolean)
+  | matched regex backtrace restIn -> restOut matches
+
+-- instance
+--   RegexManyResult True regex backtrace "" "" True
+
+instance
+  ( RegexAttemptGo (R.Many regex) restIn restOut matches
+  ) =>
+  RegexManyResult True regex backtrace restIn restOut matches
+
+else instance
+  RegexManyResult False regex backtrace restIn backtrace True

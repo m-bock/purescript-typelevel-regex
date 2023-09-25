@@ -3,6 +3,7 @@ module Type.Regex.Print where
 import Prelude
 
 import Prim.Symbol as Sym
+import Prim.TypeError (class Fail, Text)
 import Type.Char (UnsafeMkChar)
 import Type.Regex.Ast as Ast
 
@@ -12,27 +13,36 @@ class
 
 instance PrintRegex Ast.Nil ""
 
-instance PrintRegex (Ast.Lit (UnsafeMkChar char)) char
+else instance PrintRegex (Ast.Lit (UnsafeMkChar char)) char
 
-instance
+else instance
   ( PrintRegex ast1 sym1
   , PrintRegex ast2 sym2
   , Sym.Append sym1 sym2 sym
   ) =>
   PrintRegex (Ast.Cat ast1 ast2) sym
 
-instance
+else instance
   ( PrintRegex ast1 sym1
   , PrintRegex ast2 sym2
   , Append3 sym1 "|" sym2 sym
   ) =>
   PrintRegex (Ast.Alt ast1 ast2) sym
 
-instance
+else instance
   ( PrintRegex ast sym
   , Append3 "(" sym ")" sym'
   ) =>
   PrintRegex (Ast.Group ast) sym'
+
+else instance
+  ( PrintRegex ast sym
+    , Sym.Append sym "*" sym'
+    ) =>
+ PrintRegex (Ast.Many ast) sym'
+
+
+else instance (Fail (Text "Regex Print error")) => PrintRegex ast sym
 
 ---
 

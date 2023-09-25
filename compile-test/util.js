@@ -25,7 +25,8 @@ export const shouldNotCompile = (src, expectedError) => {
   const errorMsg = resultJson.errors[0].message;
 
   if (!errorMsg.includes(expectedError)) {
-    console.log(`Expected error message to include: ${expectedError}`);
+    console.log(`Expected error message to include: ${expectedError}.`);
+    console.log({src, errorMsg});
     process.exit(1);
   }
 

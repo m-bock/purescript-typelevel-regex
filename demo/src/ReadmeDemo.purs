@@ -31,23 +31,28 @@ it reflects the type level input string if the regex matches.
 
 type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
 
-sample :: String
-sample = Regex.guard @"http(s|):(a|b)(a|b)" @"https:ab"
+-- sample :: String
+-- sample = Regex.guard @"http(s|)://(a|b|c)(a|b|c)* (de|com|org)(/(a|b|c)(a|b|c)*)*(?q|)" @"https://aaac org/aba/aa?q"
 
+sample2 :: String
+sample2 = Regex.guard @"a*" @""
 
+-- http(s|):(a|b)
+
+-- http(s|):(a|b)(a|b)
 
 -- p :: Proxy ?a
 -- p = parseRegex @"(a|)"
 
 -- p2 :: Proxy ?a
--- p2 = parse_ @"http(s|)xx"
+-- p2 = parse_ @"http*"
 
 --"hello(abc|y|(y|zz)j)k"
 
 -- "foo(b|(c|a))bar"
 
 -- c :: Proxy ?a
--- c = compileRegex @"a(s|x)"
+-- c = compileRegex @"(a|b)*"
 
 -- email :: String
 -- email = Regex.guard @"[a-z]@[a-z]\\.(com|org)" @"joe@doe.com"
@@ -56,10 +61,12 @@ sample = Regex.guard @"http(s|):(a|b)(a|b)" @"https:ab"
 
 ## Supported regex features
 
-|                    |                     |
-| ------------------ | ------------------- |
-| Character literals | `a`, `b`, `c`, ...  |
-| Concatenation      | `abc`, `hello`, ... |
-|                    |                     |
+|                    |                          |
+| ------------------ | ------------------------ |
+| Character literals | `a`, `b`, `c`, ...       |
+| Concatenation      | `abc`, `hello`, ...      |
+| Groups             | `(abc)`, `(hello)`, ...  |
+| Alternatives       | `a|b|c`, `(foo|bar)`     |
+| Match Many         | `(foo)*`                 |
 
 -}
