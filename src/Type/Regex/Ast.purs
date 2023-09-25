@@ -1,6 +1,5 @@
 module Type.Regex.Ast where
 
-
 import Type.Char (Char')
 
 --------------------------------------------------------------------------------
@@ -22,6 +21,9 @@ foreign import data RegexCharClass :: CharClass -> Boolean -> Regex
 
 foreign import data Lit :: Char' -> Regex
 
+-- | `\\a`
+foreign import data Quote :: Char' -> Regex
+
 -- | `$`
 foreign import data EndOfStr :: Regex
 
@@ -34,20 +36,16 @@ foreign import data Optional :: Regex -> Regex
 -- | `+`
 foreign import data OneOrMore :: Regex -> Regex
 
--- -- | `{n}`
--- foreign import data ManyMin :: Int -> Regex -> Regex
-
--- -- | `{n, m}`
--- foreign import data ManyMinMax :: Int -> Int -> Regex -> Regex
-
 -- | `*`
 foreign import data Many :: Regex -> Regex
 
 -- | `(` .. `)`
 foreign import data Group :: Regex -> Regex
 
+-- | `ab`
 foreign import data Cat :: Regex -> Regex -> Regex
 
+-- | `|`
 foreign import data Alt :: Regex -> Regex -> Regex
 
 infixr 6 type Cat as ~

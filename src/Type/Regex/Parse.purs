@@ -27,6 +27,8 @@ type ErrorInvalidRange = MkError (Text "Invalid character range")
 
 type UnexpectedEndOfCharClass = MkError (Text "Unexpected end of character class")
 
+type ErrorUnexpectedEnd = (Text "Regex Parse Error: Unexpected end")
+
 --------------------------------------------------------------------------------
 --- ParseRegex
 --------------------------------------------------------------------------------
@@ -128,7 +130,7 @@ else instance parseRegexMatchOptional ::
   ParseRegexMatch "?" tail (regexHead ~ regexTail) depth rest regexTo
 
 else instance
-  ( Fail (Text "Nothing to repeat")
+  ( Fail ErrorIllegalQuantification
   ) =>
   ParseRegexMatch "?" tail regex depth rest regexTo
 
@@ -139,7 +141,7 @@ else instance parseRegexMatchOneOrMore ::
   ParseRegexMatch "+" tail (regexHead ~ regexTail) depth rest regexTo
 
 else instance
-  ( Fail (Text "Nothing to repeat")
+  ( Fail ErrorIllegalQuantification
   ) =>
   ParseRegexMatch "?" tail regex depth rest regexTo
 
@@ -150,7 +152,7 @@ else instance parseRegexMatchMany ::
   ParseRegexMatch "*" tail (regexHead ~ regexTail) depth rest regexTo
 
 else instance
-  ( Fail (Text "Nothing to repeat")
+  ( Fail ErrorIllegalQuantification
   ) =>
   ParseRegexMatch "?" tail regex depth rest regexTo
 
@@ -169,7 +171,7 @@ else instance parseRegexMatchCharClass ::
   ParseRegexMatch "[" tail regexFrom depth rest' regexTo
 
 else instance parseRegexMatchQuote ::
-  ( ParseRegexGo tail' (Ast.Lit char ~ regexFrom) depth rest regexTo
+  ( ParseRegexGo tail' (Ast.Quote char ~ regexFrom) depth rest regexTo
   , Sym.Cons head' tail' tail
   , SymIsChar head' char
   ) =>
@@ -194,7 +196,7 @@ class
   | sym -> rest chars positive
 
 instance parseCharacterClassInst ::
-  ( ConsOrFail (Text "Expecting '['") "[" tail sym
+  ( ConsOrFail (Text "Regex Parse Error: Expecting '['") "[" tail sym
   , ParseCharacterClassGo tail Ast.CharClassNil rest positive charClass
   ) =>
   ParseCharacterClass sym rest charClass positive
@@ -255,7 +257,7 @@ else instance parseCharacterClassMatchQuote ::
   ParseCharacterClassMatch "\\" tail charClassFrom rest positive charClassTo
 
 else instance parseCharacterClassMatchRange ::
-  ( ConsOrFail (Text "TODO") charEnd' tail' tail
+  ( ConsOrFail ErrorUnexpectedEnd charEnd' tail' tail
   , SymIsChar charEnd' charEnd
   , ParseCharacterClassGo tail' (Ast.CharClassRange charStart charEnd charClassFrom) rest positive charClassTo
   ) =>
@@ -318,9 +320,6 @@ instance isQuantifiableLit ::
 
 else instance isQuantifiableCharClass ::
   IsQuantifiable (Ast.RegexCharClass positive s)
-
--- else instance isQuantifiableNegativeCharClass ::
---   IsQuantifiable (NegativeCharClass s)
 
 else instance isQuantifiableGroup ::
   IsQuantifiable (Ast.Group r)

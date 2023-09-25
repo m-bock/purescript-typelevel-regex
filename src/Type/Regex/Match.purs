@@ -32,7 +32,7 @@ else instance
   ( Fail
       ( Above
           (Text "Regex failed to match.")
-          (Beside (Text "Unmateched rest is: ") (Text rest))
+          (Beside (Text "Unmatched rest is: ") (Text rest))
       )
   ) =>
   ScanRegexResult rest matches

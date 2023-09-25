@@ -35,6 +35,9 @@ else instance compileRegexCharClass ::
 else instance compileRegexLit ::
   CompileRegex (Ast.Lit char) (R.Lit char)
 
+else instance compileRegexQuote ::
+  CompileRegex (Ast.Quote char) (R.Lit char)
+
 else instance compileRegexEndOfStr ::
   CompileRegex Ast.EndOfStr R.EndOfStr
 
