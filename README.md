@@ -2,6 +2,13 @@
 
 Apply regular expressions to type level strings.
 
+
+## Installation
+
+```
+spago install typelevel-regex
+```
+
 ## Features
 
 - Subset of JS regexes
