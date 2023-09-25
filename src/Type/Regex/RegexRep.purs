@@ -21,7 +21,9 @@ foreign import data Wildcard :: Regex
 
 foreign import data Lit :: Char' -> Regex
 
-foreign import data NotLit :: Symbol -> Regex
+foreign import data NotLits :: Symbol -> Regex
+
+foreign import data Lits :: Symbol -> Regex
 
 ---
 

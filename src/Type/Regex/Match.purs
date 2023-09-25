@@ -5,7 +5,6 @@ import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Above, Beside, Text)
 import Type.Char (UnsafeMkChar)
 import Type.Data.Boolean (class And, class Not, class Or)
-import Type.Equality (class TypeEquals)
 import Type.Regex.RegexRep (type (~), Regex)
 import Type.Regex.RegexRep as R
 
@@ -101,7 +100,12 @@ else instance
   ( Contains chars head matches
   , Not matches matches'
   ) =>
-  RegexAttemptMatch (R.NotLit chars) head tail tail matches'
+  RegexAttemptMatch (R.NotLits chars) head tail tail matches'
+
+else instance
+  ( Contains chars head matches
+  ) =>
+  RegexAttemptMatch (R.Lits chars) head tail tail matches
 
 else instance
   ( Sym.Cons head tail str

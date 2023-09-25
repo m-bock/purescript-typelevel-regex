@@ -269,18 +269,18 @@ else instance parseCharacterClassMatchQuote ::
   ) =>
   ParseCharacterClassMatch "\\" tail charClassFrom rest positive charClassTo
 
+else instance parseCharacterClassMatchRange ::
+  ( ConsOrFail (Text "TODO") charEnd' tail' tail
+  , SymIsChar charEnd' charEnd
+  , ParseCharacterClassGo tail' (Ast.CharClassRange charStart charEnd charClassFrom) rest positive charClassTo
+  ) =>
+  ParseCharacterClassMatch "-" tail (Ast.CharClassLit charStart charClassFrom) rest positive charClassTo
+
 else instance parseCharacterClassMatchLit ::
   ( SymIsChar head char
   , ParseCharacterClassGo tail (Ast.CharClassLit char charClassFrom) rest positive charClassTo
   ) =>
   ParseCharacterClassMatch head tail charClassFrom rest positive charClassTo
-
--- else instance parseCharacterClassMatchRange ::
---   ( ConsOrFail (Text "TODO") charEnd' tail' tail
---   , SymIsChar charEnd' charEnd
---   , ParseCharacterClassGo tail' (Ast.CharClassRange charStart charEnd charClassFrom) rest charClassTo
---   ) =>
---   ParseCharacterClassMatch "-" tail (Ast.CharClassLit charStart charClassFrom) rest charClassTo
 
 --------------------------------------------------------------------------------
 --- Increment

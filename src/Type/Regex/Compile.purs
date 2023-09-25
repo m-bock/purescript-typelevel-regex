@@ -2,8 +2,10 @@ module Type.Regex.Compile where
 
 import Prim.Boolean (False, True)
 import Prim.Symbol as Sym
+import Prim.Int as Int
 import Prim.TypeError (class Fail, Beside, Doc, Text)
 import Type.Char (UnsafeMkChar)
+import Type.Regex.AsciiTable (class AsciiCode)
 import Type.Regex.Ast as Ast
 import Type.Regex.RegexRep as R
 
@@ -95,48 +97,61 @@ class
   | charClass positive -> regex
 
 instance compileCharClassPositive ::
-  ( CompileCharClassPositiveGo charClass R.Never regex
+  ( CompileCharClassGo charClass "" chars
   ) =>
-  CompileCharClass charClass True regex
+  CompileCharClass charClass True (R.Lits chars)
 
 else instance compileCharClassNegative ::
-  ( CompileCharClassNegativeGo charClass "" chars
+  ( CompileCharClassGo charClass "" chars
   ) =>
-  CompileCharClass charClass False (R.NotLit chars)
+  CompileCharClass charClass False (R.NotLits chars)
 
---- CompileCharClassPositiveGo
+--- CompileCharClassGo
 
 class
-  CompileCharClassPositiveGo
-    (charClass :: Ast.CharClass)
-    (regexFrom :: R.Regex)
-    (regexTo :: R.Regex)
-  | charClass regexFrom -> regexTo
-
-instance compileCharClassPositiveGoNil ::
-  CompileCharClassPositiveGo Ast.CharClassNil regex regex
-
-else instance compileCharClassPositiveGoLit ::
-  ( CompileCharClassPositiveGo charClass (R.Alt (R.Lit char) regexFrom) regexTo
-  ) =>
-  CompileCharClassPositiveGo (Ast.CharClassLit char charClass) regexFrom regexTo
-
----
-
---- CompileCharClassNegativeGo
-
-class
-  CompileCharClassNegativeGo
+  CompileCharClassGo
     (charClass :: Ast.CharClass)
     (charsFrom :: Symbol)
     (charsTo :: Symbol)
   | charClass charsFrom -> charsTo
 
-instance compileCharClassNegativeGoNil ::
-  CompileCharClassNegativeGo Ast.CharClassNil chars chars
+instance compileCharClassGoNil ::
+  CompileCharClassGo Ast.CharClassNil chars chars
 
-else instance compileCharClassNegativeGoLit ::
-  ( CompileCharClassNegativeGo charClass chars' charsTo
+else instance compileCharClassGoLit ::
+  ( CompileCharClassGo charClass chars' charsTo
   , Sym.Append chars char chars'
   ) =>
-  CompileCharClassNegativeGo (Ast.CharClassLit (UnsafeMkChar char) charClass) chars charsTo
+  CompileCharClassGo (Ast.CharClassLit (UnsafeMkChar char) charClass) chars charsTo
+
+else instance compileCharClassGoRange ::
+  ( AsciiCode from charFrom
+  , AsciiCode to charTo
+  , GetCharRange from to "" chars'
+  , Sym.Append chars chars' chars''
+  , CompileCharClassGo charClass chars'' charsTo
+  ) =>
+  CompileCharClassGo
+    (Ast.CharClassRange (UnsafeMkChar charFrom) (UnsafeMkChar charTo) charClass)
+    chars
+    charsTo
+
+------------------------------------------------------------------------
+
+class
+  GetCharRange (start :: Int) (end :: Int) (charsIn :: Symbol) (chars :: Symbol)
+  | start end charsIn -> chars
+
+instance
+  ( AsciiCode start char
+  , Sym.Append char charsIn chars
+  ) =>
+  GetCharRange start start charsIn chars
+
+else instance
+  ( AsciiCode start char
+  , GetCharRange start' end charsIn' chars
+  , Sym.Append char charsIn charsIn'
+  , Int.Add start 1 start'
+  ) =>
+  GetCharRange start end charsIn chars

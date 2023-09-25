@@ -35,11 +35,11 @@ type RegexURL = "^https?://([a-z]+\\.)?[a-z]+\\.[a-z]+(/[a-z_]+)*$"
 
 sample :: String
 sample = Regex.guard
-  @"^https?://[abc]+\\.(app|com|org)(/[abc]+)*(\\?([abc]+))?$"
-  @"https://abc.org/aba/aa?aaaa"
+  @"^http?://[a-z][a-z0-9]*\\.(app|com|org)(/[a-z]+)*(\\?([a-z]+))?$"
+  @"http://hello.com/path/to?query"
 
-sample2 :: String
-sample2 = Regex.guard @"^[^ab]$" @"c"
+
+{-
 
 {-
 
