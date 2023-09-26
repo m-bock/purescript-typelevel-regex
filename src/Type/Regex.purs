@@ -24,20 +24,6 @@ instance
 guard :: forall @regex @str. TestRegex regex str => IsSymbol str => String
 guard = reflectSymbol (Proxy :: Proxy str)
 
-compileRegex
-  :: forall @spec cst regex
-   . ParseRegex spec cst
-  => CompileRegex cst regex
-  => Proxy regex
-compileRegex = Proxy
-
-parse_
-  :: forall @spec spec2 cst
-   . ParseRegex spec cst
-  => PrintRegex cst spec2
-  => Proxy spec2
-parse_ = Proxy
-
 reflectRegex
   :: forall @spec cst regex
    . ParseRegex spec cst

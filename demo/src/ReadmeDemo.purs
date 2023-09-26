@@ -35,7 +35,7 @@ it reflects the type level input string if the regex matches.
 type RegexURL =
   "^(ftp|https?)://[a-z][a-z0-9]*\\.(app|com|org)(/[a-z]+)*(\\?([a-z]+))?$"
 
--- The following only compiles if the type level matches the above regex:
+-- The following only compiles if the type level string matches the above regex:
 
 sample1 :: String
 sample1 = Regex.guard @RegexURL @"http://hello.com/path/to?query"

@@ -1,16 +1,21 @@
 package:
   dependencies:
-    - console
-    - effect
     - prelude
-    - record
     - typelevel-prelude
-    - unsafe-coerce
   name: typelevel-regex
   test:
     dependencies: []
     main: Test.Main
+  publish:
+    version: 0.0.1
+    license: BSD-3-Clause
+    location:
+      githubOwner: thought2
+      githubRepo: purescript-typelevel-regex
 workspace:
   extra_packages: {}
   package_set:
     registry: 41.2.0
+  build_opts:
+    pedantic_packages: true
+    persist_warnings: true
