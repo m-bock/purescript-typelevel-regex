@@ -18,18 +18,15 @@ spago install typelevel-regex
 
 ## Example
 
--}
-
-module ReadmeDemo where
-
-import Type.Regex as Regex
-
-{-
 The `guard` function is similar to `test` which exists for many regex implementations.
 The difference is that instead of returning a boolean,
 it reflects the type level input string if the regex matches.
 
 -}
+
+module ReadmeDemo where
+
+import Type.Regex as Regex
 
 type RegexURL =
   "^(ftp|https?)://[a-z][a-z0-9]*\\.(app|com|org)(/[a-z]+)*(\\?([a-z]+))?$"
