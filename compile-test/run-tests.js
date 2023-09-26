@@ -14,10 +14,12 @@ const mkModule = (src) => dedent`
 `;
 
 const testRegexOk = (regex, str) => {
-  shouldCompile(mkModule(`
+  shouldCompile(
+    mkModule(`
       str :: String
       str = R.guard @"${regex}" @"${str}"
-    `));
+    `)
+  );
 
   const jsRegex = new RegExp(regex);
 
@@ -25,10 +27,13 @@ const testRegexOk = (regex, str) => {
 };
 
 const testRegexFail = (regex, str, err) => {
-  shouldNotCompile(mkModule(`
+  shouldNotCompile(
+    mkModule(`
       str :: String
       str = R.guard @"${regex}" @"${str}"
-    `), err);
+    `),
+    err
+  );
 
   throws(() => {
     const jsRegex = new RegExp(regex);
@@ -61,10 +66,8 @@ const main = () => {
   testRegexOk("^foo", "foobar");
   testRegexFail("^foo", "barfoo", "Regex failed to match");
 
-//  testRegexOk("foo$", "barfoo");
-//  testRegexFail("foo$", "foobar", "Regex failed to match");
-
-
+  testRegexOk("foo$", "barfoo");
+  testRegexFail("foo$", "foobar", "Regex failed to match");
 };
 
 main();

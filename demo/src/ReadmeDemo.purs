@@ -1,7 +1,7 @@
 {-
 # purescript-typelevel-regex
 
-Apply regular expressions to type level strings.
+Regular expressions for type level strings.
 
 
 ## Installation
@@ -13,18 +13,15 @@ spago install typelevel-regex
 ## Features
 
 - Subset of JS regexes
-- Nice error messages
+- Friendly error messages
 - No runtime overhead
 
-## Examples
+## Example
 
-Regexes in the following examples are simplified.
-In reality would be a bit more complex.
 -}
 
 module ReadmeDemo where
 
-import Type.Regex (reflectRegex)
 import Type.Regex as Regex
 
 {-
@@ -62,7 +59,7 @@ sample4 = Regex.guard @RegexURL @"ftp://hello.org/path/to/home"
 | Wildcards                   | `.`                      |
 | Match Start/End             | `^`, `$`                 |
 | Groups                      | `(abc)`, `(hello)`, ...  |
-| Alternatives                | `a\|b\|c`, `(foo\|bar)`     |
+| Alternatives                | `a\|b\|c`, `(foo\|bar)`  |
 | Match Many                  | `(foo)*`                 |
 | Match Some                  | `(foo)+`                 |
 | Match Maybe                 | `(foo)?`                 |

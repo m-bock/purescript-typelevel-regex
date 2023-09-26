@@ -1,6 +1,6 @@
 # purescript-typelevel-regex
 
-Apply regular expressions to type level strings.
+Regular expressions for type level strings.
 
 
 ## Installation
@@ -12,19 +12,16 @@ spago install typelevel-regex
 ## Features
 
 - Subset of JS regexes
-- Nice error messages
+- Friendly error messages
 - No runtime overhead
 
-## Examples
+## Example
 
-Regexes in the following examples are simplified.
-In reality would be a bit more complex.
 
 
 ```hs
 module ReadmeDemo where
 
-import Type.Regex (reflectRegex)
 import Type.Regex as Regex
 ```
 
