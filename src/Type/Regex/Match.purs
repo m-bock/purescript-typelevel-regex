@@ -8,25 +8,29 @@ import Type.Data.Boolean (class And, class Not, class Or)
 import Type.Regex.RegexRep (type (~), Regex)
 import Type.Regex.RegexRep as R
 
-class ScanRegex (regex :: Regex) (str :: Symbol)
+------------------------------------------------------------------------
+--- MatchRegex
+------------------------------------------------------------------------
 
-instance
+class MatchRegex (regex :: Regex) (str :: Symbol)
+
+instance matchRegexNoScan ::
   ( RegexAttemptGo regex str rest matches
-  , ScanRegexResult rest matches
+  , MatchRegexResult rest matches
   ) =>
-  ScanRegex (R.StartOfStr ~ regex) str
+  MatchRegex (R.StartOfStr ~ regex) str
 
--- instance
---   ( RegexAttemptGo regex str rest matches
---   , ScanRegexResult rest matches
---   ) =>
---   ScanRegex regex str
+else instance matchRegexScan ::
+  ( ScanRegexGo regex str rest matches
+  , MatchRegexResult rest matches
+  ) =>
+  MatchRegex regex str
 
---- ScanRegexResult
+--- MatchRegexResult
 
-class ScanRegexResult (rest :: Symbol) (matches :: Boolean)
+class MatchRegexResult (rest :: Symbol) (matches :: Boolean)
 
-instance ScanRegexResult rest True
+instance MatchRegexResult rest True
 
 else instance
   ( Fail
@@ -35,9 +39,49 @@ else instance
           (Beside (Text "Unmatched rest is: ") (Text rest))
       )
   ) =>
-  ScanRegexResult rest matches
+  MatchRegexResult rest matches
 
+------------------------------------------------------------------------
+--- ScanRegex
+------------------------------------------------------------------------
+
+--- ScanRegexGo
+
+class
+  ScanRegexGo (regex :: Regex) (str :: Symbol) (rest :: Symbol) (matches :: Boolean)
+  | regex str -> rest matches
+
+instance scanRegexGoNil ::
+  ScanRegexGo regex "" "" False
+
+
+else instance scanRegexGo ::
+  ( RegexAttemptGo regex str rest matches
+  , ScanRegexResult matches regex str rest'  matches'
+  ) =>
+  ScanRegexGo regex str rest' matches'
+
+--- ScanRegexResult
+
+class
+  ScanRegexResult (result :: Boolean) (regex :: Regex) (str :: Symbol) (rest :: Symbol) (matches :: Boolean)
+  | result regex str  -> rest matches
+
+instance scanRegexResultSuccess ::
+  ScanRegexResult True regex str rest True
+
+else instance scanRegexResultEnd ::
+  ScanRegexResult False regex "" "" False
+
+else instance scanRegexResultNext ::
+  ( Sym.Cons head tail str
+  , ScanRegexGo regex tail rest matches
+  ) =>
+  ScanRegexResult False regex str rest matches
+
+------------------------------------------------------------------------
 --- RegexAttemptGo
+------------------------------------------------------------------------
 
 class
   RegexAttemptGo (regex :: Regex) (str :: Symbol) (rest :: Symbol) (matches :: Boolean)
@@ -56,36 +100,6 @@ else instance regexAttemptGoStringContinue ::
   , RegexAttemptMatch regex head tail rest matches
   ) =>
   RegexAttemptGo regex str rest matches
-
---- IsFinalRegex
-
-class
-  IsFinalRegex (regex :: Regex) (bool :: Boolean)
-  | regex -> bool
-
-instance IsFinalRegex R.EndOfStr True
-
-else instance IsFinalRegex R.Nil True
-
-else instance
-  ( IsFinalRegex regex1 bool1
-  , IsFinalRegex regex2 bool2
-  , Or bool1 bool2 bool
-  ) =>
-  IsFinalRegex (R.Alt regex1 regex2) bool
-
-else instance
-  ( IsFinalRegex regex1 bool1
-  , IsFinalRegex regex2 bool2
-  , And bool1 bool2 bool
-  ) =>
-  IsFinalRegex (R.Cat regex1 regex2) bool
-
-else instance
-  IsFinalRegex (R.Many regex) True
-
-else instance
-  IsFinalRegex regex False
 
 --- RegexAttemptMatch
 
@@ -133,14 +147,9 @@ else instance
 else instance
   ( Sym.Cons head tail sym
   , RegexAttemptGo regex sym restIn matches
-  , RegexManyResult matches regex sym restIn rest' matches'
+  , RegexAttemtMatchManyResult matches regex sym restIn rest' matches'
   ) =>
   RegexAttemptMatch (R.Many regex) head tail rest' matches'
-
-else instance
-  ( Sym.Cons head tail rest
-  ) =>
-  RegexAttemptMatch R.Never head tail rest False
 
 else instance
   RegexAttemptMatch regex head tail tail False
@@ -173,10 +182,10 @@ else instance
   ) =>
   RegexAttemptMatchAltResult regex False restInLeft restIn restOut matches
 
---- RegexManyResult
+--- RegexAttemtMatchManyResult
 
 class
-  RegexManyResult
+  RegexAttemtMatchManyResult
     (matched :: Boolean)
     (regex :: Regex)
     (backtrace :: Symbol)
@@ -185,13 +194,45 @@ class
     (matches :: Boolean)
   | matched regex backtrace restIn -> restOut matches
 
-instance regexManyResultContinue ::
+instance regexAttemtMatchManyResultContinue ::
   ( RegexAttemptGo (R.Many regex) restIn restOut matches
   ) =>
-  RegexManyResult True regex backtrace restIn restOut matches
+  RegexAttemtMatchManyResult True regex backtrace restIn restOut matches
 
-else instance regexManyResultStop ::
-  RegexManyResult False regex backtrace restIn backtrace True
+else instance regexAttemtMatchManyResultStop ::
+  RegexAttemtMatchManyResult False regex backtrace restIn backtrace True
+
+------------------------------------------------------------------------
+--- IsFinalRegex
+------------------------------------------------------------------------
+
+class
+  IsFinalRegex (regex :: Regex) (bool :: Boolean)
+  | regex -> bool
+
+instance IsFinalRegex R.EndOfStr True
+
+else instance IsFinalRegex R.Nil True
+
+else instance
+  ( IsFinalRegex regex1 bool1
+  , IsFinalRegex regex2 bool2
+  , Or bool1 bool2 bool
+  ) =>
+  IsFinalRegex (R.Alt regex1 regex2) bool
+
+else instance
+  ( IsFinalRegex regex1 bool1
+  , IsFinalRegex regex2 bool2
+  , And bool1 bool2 bool
+  ) =>
+  IsFinalRegex (R.Cat regex1 regex2) bool
+
+else instance
+  IsFinalRegex (R.Many regex) True
+
+else instance
+  IsFinalRegex regex False
 
 ------------------------------------------------------------------------
 -- Contains

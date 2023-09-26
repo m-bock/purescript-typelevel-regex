@@ -3,7 +3,7 @@ module Type.Regex where
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Type.Proxy (Proxy(..))
 import Type.Regex.Compile (class CompileRegex)
-import Type.Regex.Match (class ScanRegex)
+import Type.Regex.Match (class MatchRegex)
 import Type.Regex.Parse (class ParseRegex)
 import Type.Regex.Print (class PrintRegex)
 
@@ -13,7 +13,7 @@ class
 instance
   ( ParseRegex regexStr regexAst
   , CompileRegex regexAst regex
-  , ScanRegex regex str
+  , MatchRegex regex str
   ) =>
   TestRegex regexStr str
 
