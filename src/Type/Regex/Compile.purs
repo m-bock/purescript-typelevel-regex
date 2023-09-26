@@ -1,8 +1,9 @@
 module Type.Regex.Compile where
 
 import Prim.Boolean (False, True)
-import Prim.Symbol as Sym
 import Prim.Int as Int
+import Prim.Ordering (GT, Ordering)
+import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Beside, Doc, Text)
 import Type.Char (UnsafeMkChar)
 import Type.Regex.AsciiTable (class AsciiCode)
@@ -12,6 +13,8 @@ import Type.Regex.RegexRep as R
 type MkError (err :: Doc) = Beside (Text "Regex Compile Error: ") err
 
 type ErrorUnexpected = MkError (Text "Unexpected error. Please report this as a bug.")
+
+type ErrorRange = MkError (Text "Range error")
 
 --------------------------------------------------------------------------------
 --- CompileRegex
@@ -130,7 +133,7 @@ else instance compileCharClassGoLit ::
 else instance compileCharClassGoRange ::
   ( AsciiCode from charFrom
   , AsciiCode to charTo
-  , GetCharRange from to "" chars'
+  , GetCharRange from to chars'
   , Sym.Append chars chars' chars''
   , CompileCharClassGo charClass chars'' charsTo
   ) =>
@@ -142,19 +145,65 @@ else instance compileCharClassGoRange ::
 ------------------------------------------------------------------------
 
 class
-  GetCharRange (start :: Int) (end :: Int) (charsIn :: Symbol) (chars :: Symbol)
+  GetCharRange (start :: Int) (end :: Int) (chars :: Symbol)
+  | start end -> chars
+
+instance
+  ( GetCharRangeGuard start end chars
+  ) =>
+  GetCharRange start end chars
+
+---
+
+class
+  GetCharRangeGuard (start :: Int) (end :: Int) (chars :: Symbol)
+  | start end -> chars
+
+instance getCharRangeGuard ::
+  ( Int.Compare start end result
+  , GetCharRangeGuardResult result start end chars
+  ) =>
+  GetCharRangeGuard start end chars
+
+---
+
+class
+  GetCharRangeGuardResult
+    (result :: Ordering)
+    (start :: Int)
+    (end :: Int)
+    (chars :: Symbol)
+  | result start end -> chars
+
+instance getCharRangeGuardResultFail ::
+  Fail ErrorRange =>
+  GetCharRangeGuardResult GT start end charsIn
+
+else instance getCharRangeGuardResultOk ::
+  ( GetCharRangeGo start end "" chars
+  ) =>
+  GetCharRangeGuardResult result start end chars
+
+---
+
+class
+  GetCharRangeGo
+    (start :: Int)
+    (end :: Int)
+    (charsIn :: Symbol)
+    (chars :: Symbol)
   | start end charsIn -> chars
 
 instance
   ( AsciiCode start char
   , Sym.Append char charsIn chars
   ) =>
-  GetCharRange start start charsIn chars
+  GetCharRangeGo start start charsIn chars
 
 else instance
   ( AsciiCode start char
-  , GetCharRange start' end charsIn' chars
+  , GetCharRangeGo start' end charsIn' chars
   , Sym.Append char charsIn charsIn'
   , Int.Add start 1 start'
   ) =>
-  GetCharRange start end charsIn chars
+  GetCharRangeGo start end charsIn chars
