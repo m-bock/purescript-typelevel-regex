@@ -143,6 +143,8 @@ else instance compileCharClassGoRange ::
     charsTo
 
 ------------------------------------------------------------------------
+--- GetCharRange
+------------------------------------------------------------------------
 
 class
   GetCharRange (start :: Int) (end :: Int) (chars :: Symbol)
@@ -153,7 +155,7 @@ instance
   ) =>
   GetCharRange start end chars
 
----
+--- GetCharRangeGuard
 
 class
   GetCharRangeGuard (start :: Int) (end :: Int) (chars :: Symbol)
@@ -165,7 +167,7 @@ instance getCharRangeGuard ::
   ) =>
   GetCharRangeGuard start end chars
 
----
+--- GetCharRangeGuardResult
 
 class
   GetCharRangeGuardResult
@@ -184,7 +186,7 @@ else instance getCharRangeGuardResultOk ::
   ) =>
   GetCharRangeGuardResult result start end chars
 
----
+--- GetCharRangeGo
 
 class
   GetCharRangeGo
@@ -194,13 +196,13 @@ class
     (chars :: Symbol)
   | start end charsIn -> chars
 
-instance
+instance getCharRangeGoLast ::
   ( AsciiCode start char
   , Sym.Append char charsIn chars
   ) =>
   GetCharRangeGo start start charsIn chars
 
-else instance
+else instance getCharRangeGoNext ::
   ( AsciiCode start char
   , GetCharRangeGo start' end charsIn' chars
   , Sym.Append char charsIn charsIn'

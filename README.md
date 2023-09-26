@@ -24,6 +24,7 @@ In reality would be a bit more complex.
 ```hs
 module ReadmeDemo where
 
+import Type.Regex (reflectRegex)
 import Type.Regex as Regex
 ```
 
