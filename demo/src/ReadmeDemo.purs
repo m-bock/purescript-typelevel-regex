@@ -25,8 +25,7 @@ module ReadmeDemo where
 import Type.Regex as Regex
 
 {-
-The following will only compile if the the string matches the regex.
-`guard` is similar to `test` which is exists for many regex libraries.
+The `guard` is similar to `test` which is exists for many regex libraries.
 The difference is that instead of returning a boolean,
 it reflects the type level input string if the regex matches.
 
