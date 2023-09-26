@@ -7,7 +7,7 @@ package:
     dependencies: []
     main: Test.Main
   publish:
-    version: 0.0.1
+    version: 0.0.3
     license: BSD-3-Clause
     location:
       githubOwner: thought2
