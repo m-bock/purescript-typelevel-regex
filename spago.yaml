@@ -1,7 +1,7 @@
 package:
   dependencies:
-    - prelude
-    - typelevel-prelude
+    - prelude: ">=6.0.1 <7.0.0"
+    - typelevel-prelude: ">=7.0.0 <8.0.0"
   name: typelevel-regex
   test:
     dependencies: []
