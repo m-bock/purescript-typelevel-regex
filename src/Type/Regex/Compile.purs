@@ -7,7 +7,7 @@ import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Beside, Doc, Text)
 import Type.Char (UnsafeMkChar)
 import Type.Regex.AsciiTable (class AsciiCode)
-import Type.Regex.Ast as Ast
+import Type.Regex.CST as CST
 import Type.Regex.RegexRep as R
 
 type MkError (err :: Doc) = Beside (Text "Regex Compile Error: ") err
@@ -21,85 +21,85 @@ type ErrorRange = MkError (Text "Range error")
 --------------------------------------------------------------------------------
 
 class
-  CompileRegex (ast :: Ast.Regex) (regex :: R.Regex)
-  | ast -> regex
+  CompileRegex (cst :: CST.Regex) (regex :: R.Regex)
+  | cst -> regex
 
 instance compileRegexNil ::
-  CompileRegex Ast.Nil R.Nil
+  CompileRegex CST.Nil R.Nil
 
 else instance compileRegexWildcard ::
-  CompileRegex Ast.Wildcard R.Wildcard
+  CompileRegex CST.Wildcard R.Wildcard
 
 else instance compileRegexCharClass ::
   ( CompileCharClass charClass positive regex
   ) =>
-  CompileRegex (Ast.RegexCharClass charClass positive) regex
+  CompileRegex (CST.RegexCharClass charClass positive) regex
 
 else instance compileRegexLit ::
-  CompileRegex (Ast.Lit char) (R.Lit char)
+  CompileRegex (CST.Lit char) (R.Lit char)
 
 else instance compileRegexQuote ::
-  CompileRegex (Ast.Quote char) (R.Lit char)
+  CompileRegex (CST.Quote char) (R.Lit char)
 
 else instance compileRegexEndOfStr ::
-  CompileRegex Ast.EndOfStr R.EndOfStr
+  CompileRegex CST.EndOfStr R.EndOfStr
 
 else instance compileRegexStartOfStr ::
-  CompileRegex Ast.StartOfStr R.StartOfStr
+  CompileRegex CST.StartOfStr R.StartOfStr
 
 else instance compileRegexOptional ::
-  ( CompileRegex ast regex
+  ( CompileRegex cst regex
   ) =>
-  CompileRegex (Ast.Optional ast) (R.Alt regex R.Nil)
+  CompileRegex (CST.Optional cst) (R.Alt regex R.Nil)
 
 else instance compileRegexOneOrMore ::
-  ( CompileRegex ast regex
+  ( CompileRegex cst regex
   ) =>
-  CompileRegex (Ast.OneOrMore ast) (R.Cat regex (R.Many regex))
+  CompileRegex (CST.OneOrMore cst) (R.Cat regex (R.Many regex))
 
 else instance compileRegexMany ::
-  ( CompileRegex ast regex
+  ( CompileRegex cst regex
   ) =>
-  CompileRegex (Ast.Many ast) (R.Many regex)
+  CompileRegex (CST.Many cst) (R.Many regex)
 
 else instance compileRegexGroup ::
-  ( CompileRegex ast regex
+  ( CompileRegex cst regex
   ) =>
-  CompileRegex (Ast.Group ast) regex
+  CompileRegex (CST.Group cst) regex
 
 else instance compileRegexCat' ::
-  ( CompileRegex ast regex
+  ( CompileRegex cst regex
   ) =>
-  CompileRegex (Ast.Cat ast Ast.Nil) regex
+  CompileRegex (CST.Cat cst CST.Nil) regex
 
 else instance compileRegexCat'' ::
-  ( CompileRegex ast regex
+  ( CompileRegex cst regex
   ) =>
-  CompileRegex (Ast.Cat Ast.Nil ast) regex
+  CompileRegex (CST.Cat CST.Nil cst) regex
 
 else instance compileRegexCat ::
-  ( CompileRegex ast1 regex1
-  , CompileRegex ast2 regex2
+  ( CompileRegex cst1 regex1
+  , CompileRegex cst2 regex2
   ) =>
-  CompileRegex (Ast.Cat ast1 ast2) (R.Cat regex1 regex2)
+  CompileRegex (CST.Cat cst1 cst2) (R.Cat regex1 regex2)
 
 else instance compileRegexAlt ::
-  ( CompileRegex ast1 regex1
-  , CompileRegex ast2 regex2
+  ( CompileRegex cst1 regex1
+  , CompileRegex cst2 regex2
   ) =>
-  CompileRegex (Ast.Alt ast1 ast2) (R.Alt regex1 regex2)
+  CompileRegex (CST.Alt cst1 cst2) (R.Alt regex1 regex2)
 
 else instance compileRegexErrUnexpected ::
   ( Fail ErrorUnexpected
   ) =>
-  CompileRegex ast regex
+  CompileRegex cst regex
 
 --------------------------------------------------------------------------------
 --- CompileCharClass
 --------------------------------------------------------------------------------
 
 class
-  CompileCharClass (charClass :: Ast.CharClass) (positive :: Boolean) (regex :: R.Regex)
+  CompileCharClass (charClass :: CST.CharClass) (positive :: Boolean) (regex :: R.Regex)
   | charClass positive -> regex
 
 instance compileCharClassPositive ::
@@ -116,19 +116,19 @@ else instance compileCharClassNegative ::
 
 class
   CompileCharClassGo
-    (charClass :: Ast.CharClass)
+    (charClass :: CST.CharClass)
     (charsFrom :: Symbol)
     (charsTo :: Symbol)
   | charClass charsFrom -> charsTo
 
 instance compileCharClassGoNil ::
-  CompileCharClassGo Ast.CharClassNil chars chars
+  CompileCharClassGo CST.CharClassNil chars chars
 
 else instance compileCharClassGoLit ::
   ( CompileCharClassGo charClass chars' charsTo
   , Sym.Append chars char chars'
   ) =>
-  CompileCharClassGo (Ast.CharClassLit (UnsafeMkChar char) charClass) chars charsTo
+  CompileCharClassGo (CST.CharClassLit (UnsafeMkChar char) charClass) chars charsTo
 
 else instance compileCharClassGoRange ::
   ( AsciiCode from charFrom
@@ -138,7 +138,7 @@ else instance compileCharClassGoRange ::
   , CompileCharClassGo charClass chars'' charsTo
   ) =>
   CompileCharClassGo
-    (Ast.CharClassRange (UnsafeMkChar charFrom) (UnsafeMkChar charTo) charClass)
+    (CST.CharClassRange (UnsafeMkChar charFrom) (UnsafeMkChar charTo) charClass)
     chars
     charsTo
 

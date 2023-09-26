@@ -1,4 +1,4 @@
-module Type.Regex.Ast where
+module Type.Regex.CST where
 
 import Type.Char (Char')
 

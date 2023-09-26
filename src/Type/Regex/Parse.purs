@@ -8,8 +8,8 @@ import Prim.Symbol as Sym
 import Prim.TypeError (class Fail, Beside, Doc, Text)
 import Type.Char (class SymIsChar)
 import Type.Proxy (Proxy(..))
-import Type.Regex.Ast (type (~))
-import Type.Regex.Ast as Ast
+import Type.Regex.CST (type (~))
+import Type.Regex.CST as CST
 
 --------------------------------------------------------------------------------
 --- Errors
@@ -34,7 +34,7 @@ type ErrorUnexpectedEnd = (Text "Regex Parse Error: Unexpected end")
 --------------------------------------------------------------------------------
 
 class
-  ParseRegex (spec :: Symbol) (regex :: Ast.Regex)
+  ParseRegex (spec :: Symbol) (regex :: CST.Regex)
   | spec -> regex
 
 instance parseRegexInst ::
@@ -48,11 +48,11 @@ parseRegex = Proxy
 --- ParseRegexAtDepth
 
 class
-  ParseRegexAtDepth (spec :: Symbol) (depth :: Int) (rest :: Symbol) (regex :: Ast.Regex)
+  ParseRegexAtDepth (spec :: Symbol) (depth :: Int) (rest :: Symbol) (regex :: CST.Regex)
   | spec depth -> rest regex
 
 instance parseRegexAtDepth ::
-  ( ParseRegexGo spec Ast.Nil depth rest regex
+  ( ParseRegexGo spec CST.Nil depth rest regex
   , ReverseRegex regex regex'
   ) =>
   ParseRegexAtDepth spec depth rest regex'
@@ -62,10 +62,10 @@ instance parseRegexAtDepth ::
 class
   ParseRegexGo
     (sym :: Symbol)
-    (regexFrom :: Ast.Regex)
+    (regexFrom :: CST.Regex)
     (depth :: Int)
     (rest :: Symbol)
-    (regexTo :: Ast.Regex)
+    (regexTo :: CST.Regex)
   | sym regexFrom depth -> rest regexTo
 
 instance parseRegexGoEnd :: ParseRegexGo "" regex 0 "" regex
@@ -87,10 +87,10 @@ class
   ParseRegexMatch
     (head :: Symbol)
     (tail :: Symbol)
-    (regexFrom :: Ast.Regex)
+    (regexFrom :: CST.Regex)
     (depth :: Int)
     (rest :: Symbol)
-    (regex :: Ast.Regex)
+    (regex :: CST.Regex)
   | head tail regexFrom depth -> rest regex
 
 instance parseRegexMatchGroupGroupCloseError ::
@@ -104,27 +104,27 @@ else instance parseRegexMatchGroupClose ::
 else instance parseRegexMatchGroupStart ::
   ( Increment depth depthNext
   , ParseRegexAtDepth tail depthNext rest' regexTo'
-  , ParseRegexGo rest' (Ast.Group regexTo' ~ regexFrom) depth rest regexTo
+  , ParseRegexGo rest' (CST.Group regexTo' ~ regexFrom) depth rest regexTo
   ) =>
   ParseRegexMatch "(" tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchWildcard ::
-  ( ParseRegexGo tail (Ast.Wildcard ~ regexFrom) depth rest regexTo
+  ( ParseRegexGo tail (CST.Wildcard ~ regexFrom) depth rest regexTo
   ) =>
   ParseRegexMatch "." tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchStartOfStr ::
-  ( ParseRegexGo tail (Ast.StartOfStr ~ regexFrom) depth rest regexTo
+  ( ParseRegexGo tail (CST.StartOfStr ~ regexFrom) depth rest regexTo
   ) =>
   ParseRegexMatch "^" tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchEndOfStr ::
-  ( ParseRegexGo tail (Ast.EndOfStr ~ regexFrom) depth rest regexTo
+  ( ParseRegexGo tail (CST.EndOfStr ~ regexFrom) depth rest regexTo
   ) =>
   ParseRegexMatch "$" tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchOptional ::
-  ( ParseRegexGo tail (Ast.Optional regexHead ~ regexTail) depth rest regexTo
+  ( ParseRegexGo tail (CST.Optional regexHead ~ regexTail) depth rest regexTo
   , IsQuantifiable regexHead
   ) =>
   ParseRegexMatch "?" tail (regexHead ~ regexTail) depth rest regexTo
@@ -135,7 +135,7 @@ else instance
   ParseRegexMatch "?" tail regex depth rest regexTo
 
 else instance parseRegexMatchOneOrMore ::
-  ( ParseRegexGo tail (Ast.OneOrMore regexHead ~ regexTail) depth rest regexTo
+  ( ParseRegexGo tail (CST.OneOrMore regexHead ~ regexTail) depth rest regexTo
   , IsQuantifiable regexHead
   ) =>
   ParseRegexMatch "+" tail (regexHead ~ regexTail) depth rest regexTo
@@ -146,7 +146,7 @@ else instance
   ParseRegexMatch "?" tail regex depth rest regexTo
 
 else instance parseRegexMatchMany ::
-  ( ParseRegexGo tail (Ast.Many regexHead ~ regexTail) depth rest regexTo
+  ( ParseRegexGo tail (CST.Many regexHead ~ regexTail) depth rest regexTo
   , IsQuantifiable regexHead
   ) =>
   ParseRegexMatch "*" tail (regexHead ~ regexTail) depth rest regexTo
@@ -161,24 +161,24 @@ else instance parseRegexMatchAlt ::
   , Decrement depth depth'
   , ReverseRegex regex regex'
   ) =>
-  ParseRegexMatch "|" tail regex depth rest (Ast.Alt regex' regexTo ~ Ast.Nil)
+  ParseRegexMatch "|" tail regex depth rest (CST.Alt regex' regexTo ~ CST.Nil)
 
 else instance parseRegexMatchCharClass ::
   ( Sym.Cons "[" tail sym
   , ParseCharacterClass sym rest charClass positive
-  , ParseRegexGo rest (Ast.RegexCharClass charClass positive ~ regexFrom) depth rest' regexTo
+  , ParseRegexGo rest (CST.RegexCharClass charClass positive ~ regexFrom) depth rest' regexTo
   ) =>
   ParseRegexMatch "[" tail regexFrom depth rest' regexTo
 
 else instance parseRegexMatchQuote ::
-  ( ParseRegexGo tail' (Ast.Quote char ~ regexFrom) depth rest regexTo
+  ( ParseRegexGo tail' (CST.Quote char ~ regexFrom) depth rest regexTo
   , Sym.Cons head' tail' tail
   , SymIsChar head' char
   ) =>
   ParseRegexMatch "\\" tail regexFrom depth rest regexTo
 
 else instance parseRegexMatchLit ::
-  ( ParseRegexGo tail (Ast.Lit char ~ regexFrom) depth rest regexTo
+  ( ParseRegexGo tail (CST.Lit char ~ regexFrom) depth rest regexTo
   , SymIsChar head char
   ) =>
   ParseRegexMatch head tail regexFrom depth rest regexTo
@@ -191,13 +191,13 @@ class
   ParseCharacterClass
     (sym :: Symbol)
     (rest :: Symbol)
-    (chars :: Ast.CharClass)
+    (chars :: CST.CharClass)
     (positive :: Boolean)
   | sym -> rest chars positive
 
 instance parseCharacterClassInst ::
   ( ConsOrFail (Text "Regex Parse Error: Expecting '['") "[" tail sym
-  , ParseCharacterClassGo tail Ast.CharClassNil rest positive charClass
+  , ParseCharacterClassGo tail CST.CharClassNil rest positive charClass
   ) =>
   ParseCharacterClass sym rest charClass positive
 
@@ -212,10 +212,10 @@ parseCharacterClass = unit
 class
   ParseCharacterClassGo
     (sym :: Symbol)
-    (charsIn :: Ast.CharClass)
+    (charsIn :: CST.CharClass)
     (rest :: Symbol)
     (positive :: Boolean)
-    (chars :: Ast.CharClass)
+    (chars :: CST.CharClass)
   | sym charsIn -> rest positive chars
 
 instance parseCharacterClassGoError ::
@@ -235,37 +235,37 @@ class
   ParseCharacterClassMatch
     (head :: Symbol)
     (tail :: Symbol)
-    (charClassFrom :: Ast.CharClass)
+    (charClassFrom :: CST.CharClass)
     (rest :: Symbol)
     (positive :: Boolean)
-    (charClassTo :: Ast.CharClass)
+    (charClassTo :: CST.CharClass)
   | head tail charClassFrom -> rest positive charClassTo
 
 instance parseCharacterClassMatchClose ::
   ParseCharacterClassMatch "]" tail charClass tail True charClass
 
 else instance parseCharacterClassMatchNegate ::
-  ( ParseCharacterClassGo tail Ast.CharClassNil tail' positive charClass'
+  ( ParseCharacterClassGo tail CST.CharClassNil tail' positive charClass'
   ) =>
-  ParseCharacterClassMatch "^" tail Ast.CharClassNil tail' False charClass'
+  ParseCharacterClassMatch "^" tail CST.CharClassNil tail' False charClass'
 
 else instance parseCharacterClassMatchQuote ::
   ( Sym.Cons head' tail' tail
   , SymIsChar head' char
-  , ParseCharacterClassGo tail' (Ast.CharClassLit char charClassFrom) rest positive charClassTo
+  , ParseCharacterClassGo tail' (CST.CharClassLit char charClassFrom) rest positive charClassTo
   ) =>
   ParseCharacterClassMatch "\\" tail charClassFrom rest positive charClassTo
 
 else instance parseCharacterClassMatchRange ::
   ( ConsOrFail ErrorUnexpectedEnd charEnd' tail' tail
   , SymIsChar charEnd' charEnd
-  , ParseCharacterClassGo tail' (Ast.CharClassRange charStart charEnd charClassFrom) rest positive charClassTo
+  , ParseCharacterClassGo tail' (CST.CharClassRange charStart charEnd charClassFrom) rest positive charClassTo
   ) =>
-  ParseCharacterClassMatch "-" tail (Ast.CharClassLit charStart charClassFrom) rest positive charClassTo
+  ParseCharacterClassMatch "-" tail (CST.CharClassLit charStart charClassFrom) rest positive charClassTo
 
 else instance parseCharacterClassMatchLit ::
   ( SymIsChar head char
-  , ParseCharacterClassGo tail (Ast.CharClassLit char charClassFrom) rest positive charClassTo
+  , ParseCharacterClassGo tail (CST.CharClassLit char charClassFrom) rest positive charClassTo
   ) =>
   ParseCharacterClassMatch head tail charClassFrom rest positive charClassTo
 
@@ -313,16 +313,16 @@ else instance consOrFailNonEmpty ::
 --- IsQuantifiable
 --------------------------------------------------------------------------------
 
-class IsQuantifiable (regex :: Ast.Regex)
+class IsQuantifiable (regex :: CST.Regex)
 
 instance isQuantifiableLit ::
-  IsQuantifiable (Ast.Lit s)
+  IsQuantifiable (CST.Lit s)
 
 else instance isQuantifiableCharClass ::
-  IsQuantifiable (Ast.RegexCharClass positive s)
+  IsQuantifiable (CST.RegexCharClass positive s)
 
 else instance isQuantifiableGroup ::
-  IsQuantifiable (Ast.Group r)
+  IsQuantifiable (CST.Group r)
 
 else instance isQuantifiableFail ::
   ( Fail ErrorIllegalQuantification
@@ -334,22 +334,22 @@ else instance isQuantifiableFail ::
 --------------------------------------------------------------------------------
 
 class
-  ReverseRegex (regexFrom :: Ast.Regex) (regexOut :: Ast.Regex)
+  ReverseRegex (regexFrom :: CST.Regex) (regexOut :: CST.Regex)
   | regexFrom -> regexOut
 
 instance reverseRegex ::
-  ( ReverseRegexGo regex Ast.Nil regexOut
+  ( ReverseRegexGo regex CST.Nil regexOut
   ) =>
   ReverseRegex regex regexOut
 
 --- ReverseRegexGo
 
 class
-  ReverseRegexGo (regex :: Ast.Regex) (regexFrom :: Ast.Regex) (regexTo :: Ast.Regex)
+  ReverseRegexGo (regex :: CST.Regex) (regexFrom :: CST.Regex) (regexTo :: CST.Regex)
   | regex regexFrom -> regexTo
 
 instance reverseRegexGoNil ::
-  ReverseRegexGo Ast.Nil a a
+  ReverseRegexGo CST.Nil a a
 
 else instance reverseRegexGoCons ::
   ( ReverseRegexGo tail (head ~ regexFrom) regexTo
