@@ -52,7 +52,7 @@ sample4 = Regex.guard @RegexURL @"ftp://hello.org/path/to/home"
 
 ## Supported regex features
 
-|                             |                          |
+| Feature                     | Example                  |
 | --------------------------- | ------------------------ |
 | Character literals          | `a`, `b`, `c`, ...       |
 | Wildcards                   | `.`                      |
